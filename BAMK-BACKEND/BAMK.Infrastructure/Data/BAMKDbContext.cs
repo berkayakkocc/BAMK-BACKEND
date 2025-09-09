@@ -59,7 +59,8 @@ namespace BAMK.Infrastructure.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Quantity).IsRequired();
-                entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.UnitPrice).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.TotalPrice).HasColumnType("decimal(18,2)");
                 
                 entity.HasOne(e => e.Order)
                     .WithMany(o => o.OrderItems)

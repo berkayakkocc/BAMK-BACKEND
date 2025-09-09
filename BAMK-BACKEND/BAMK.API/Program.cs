@@ -23,11 +23,12 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Add AutoMapper
-builder.Services.AddAutoMapper(typeof(BAMK.Application.Mappings.TShirtMappingProfile));
+builder.Services.AddAutoMapper(typeof(BAMK.Application.Mappings.TShirtMappingProfile), typeof(BAMK.Application.Mappings.OrderMappingProfile));
 
 // Add Application Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITShirtService, TShirtService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 // Add JWT Services
 builder.Services.AddScoped<IJwtService, JwtService>();

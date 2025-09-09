@@ -1,8 +1,8 @@
 # BAMK Backend MVP Öncelik Listesi
 
 ## 📊 Mevcut Durum
-- **MVP Tamamlanma Oranı:** %75
-- **Tahmini Kalan Süre:** 1-2 gün
+- **MVP Tamamlanma Oranı:** %85
+- **Tahmini Kalan Süre:** 1 gün
 - **Son Güncelleme:** 2024-12-09
 
 ## 🎯 MVP Hedefleri
@@ -49,16 +49,21 @@
 ## 🟡 ORTA ÖNCELİK (2-3 gün)
 
 ### 3. Sipariş Sistemi
-- [ ] **OrderService implementasyonu**
-  - Sipariş oluşturma
-  - Sipariş durumu güncelleme
-  - Kullanıcı siparişlerini listeleme
+- [x] **OrderService implementasyonu** ✅
+  - Sipariş oluşturma ✅
+  - Sipariş durumu güncelleme ✅
+  - Kullanıcı siparişlerini listeleme ✅
+  - Toplam tutar hesaplama ✅
 
-- [ ] **OrderController oluşturma**
-  - POST /api/orders - Yeni sipariş oluştur
-  - GET /api/orders - Kullanıcı siparişlerini listele
-  - GET /api/orders/{id} - Sipariş detayı
-  - PUT /api/orders/{id}/status - Sipariş durumu güncelle
+- [x] **OrderController oluşturma** ✅
+  - POST /api/orders - Yeni sipariş oluştur ✅
+  - GET /api/orders - Kullanıcı siparişlerini listele ✅
+  - GET /api/orders/{id} - Sipariş detayı ✅
+  - PUT /api/orders/{id}/status - Sipariş durumu güncelle ✅
+  - PUT /api/orders/{id}/payment-status - Ödeme durumu güncelle ✅
+  - GET /api/orders/user/{userId} - Kullanıcı siparişleri ✅
+  - GET /api/orders/{id}/total - Sipariş toplamı ✅
+  - DELETE /api/orders/{id} - Sipariş sil ✅
 
 ### 4. Soru-Cevap Sistemi
 - [ ] **QuestionService implementasyonu**
@@ -113,9 +118,9 @@
 - [x] Swagger'da test et ✅
 
 ### Gün 3: Sipariş Sistemi
-- [ ] OrderService oluştur
-- [ ] OrderController oluştur
-- [ ] Sipariş işlemlerini test et
+- [x] OrderService oluştur ✅
+- [x] OrderController oluştur ✅
+- [x] Sipariş işlemlerini test et ✅
 
 ### Gün 4: Soru-Cevap Sistemi
 - [ ] QuestionService oluştur
@@ -177,8 +182,14 @@ https://localhost:7000/swagger
 - [x] AutoMapper profili (TShirt mapping)
 - [x] Build hatalarının düzeltilmesi
 - [x] Error handling iyileştirmeleri
+- [x] Order sistemi tamamen implementasyonu
+- [x] Order DTOs ve AutoMapper profili
+- [x] Order CRUD operations
+- [x] Order status ve payment status güncelleme
+- [x] Order total hesaplama
+- [x] Build hatalarının düzeltilmesi
 
 ---
 
 **Son Güncelleme:** 2024-12-09  
-**Durum:** MVP'ye %75 tamamlandı
+**Durum:** MVP'ye %85 tamamlandı
