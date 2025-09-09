@@ -51,6 +51,24 @@ namespace BAMK.Infrastructure.Repositories
             _dbSet.Remove(entity);
         }
 
+        public async Task UpdateAsync(T entity)
+        {
+            _dbSet.Update(entity);
+            await Task.CompletedTask;
+        }
+
+        public async Task RemoveAsync(T entity)
+        {
+            _dbSet.Remove(entity);
+            await Task.CompletedTask;
+        }
+
+        public async Task DeleteAsync(T entity)
+        {
+            _dbSet.Remove(entity);
+            await Task.CompletedTask;
+        }
+
         public async Task<int> CountAsync()
         {
             return await _dbSet.CountAsync();

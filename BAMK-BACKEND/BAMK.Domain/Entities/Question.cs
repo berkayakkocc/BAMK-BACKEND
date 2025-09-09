@@ -8,6 +8,7 @@ namespace BAMK.Domain.Entities
         public string Content { get; set; } = string.Empty;
         public int UserId { get; set; }
         public bool IsAnswered { get; set; } = false;
+        public bool IsActive { get; set; } = true;
 
         // Navigation properties
         public virtual User User { get; set; } = null!;

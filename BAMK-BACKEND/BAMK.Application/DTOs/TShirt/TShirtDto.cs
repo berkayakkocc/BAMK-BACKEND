@@ -21,6 +21,7 @@ namespace BAMK.Application.DTOs.TShirt
         public decimal Price { get; set; }
         public string? ImageUrl { get; set; }
         public int StockQuantity { get; set; }
+        public bool IsActive { get; set; } = true;
         public string? Size { get; set; }
         public string? Color { get; set; }
     }

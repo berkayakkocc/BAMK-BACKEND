@@ -10,7 +10,10 @@ namespace BAMK.Core.Interfaces
         Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
         Task AddAsync(T entity);
         void Update(T entity);
+        Task UpdateAsync(T entity);
         void Remove(T entity);
+        Task RemoveAsync(T entity);
+        Task DeleteAsync(T entity);
         Task<int> SaveChangesAsync();
         Task<int> CountAsync();
         Task<int> CountAsync(Expression<Func<T, bool>> predicate);

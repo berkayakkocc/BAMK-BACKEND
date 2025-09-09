@@ -8,6 +8,7 @@ namespace BAMK.Domain.Entities
         public int QuestionId { get; set; }
         public int UserId { get; set; }
         public bool IsAccepted { get; set; } = false;
+        public bool IsActive { get; set; } = true;
 
         // Navigation properties
         public virtual Question Question { get; set; } = null!;

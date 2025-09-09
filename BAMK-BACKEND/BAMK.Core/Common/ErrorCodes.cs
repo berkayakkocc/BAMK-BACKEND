@@ -9,6 +9,7 @@ namespace BAMK.Core.Common
         Unauthorized = 3,
         Forbidden = 4,
         InvalidOperation = 5,
+        InternalServerError = 6,
         
         // Network errors
         NetworkError = 100,
