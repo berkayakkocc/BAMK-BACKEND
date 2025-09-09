@@ -1,9 +1,9 @@
 # BAMK Backend MVP Öncelik Listesi
 
 ## 📊 Mevcut Durum
-- **MVP Tamamlanma Oranı:** %50
-- **Tahmini Kalan Süre:** 2-4 gün
-- **Son Güncelleme:** 2024-09-09
+- **MVP Tamamlanma Oranı:** %75
+- **Tahmini Kalan Süre:** 1-2 gün
+- **Son Güncelleme:** 2024-12-09
 
 ## 🎯 MVP Hedefleri
 1. **Kullanıcı Yönetimi** - Tam çalışır durumda
@@ -28,17 +28,21 @@
   - Email kontrolü ve validation
 
 ### 2. T-Shirt Yönetimi
-- [ ] **TShirtService implementasyonu**
-  - CRUD operations (Create, Read, Update, Delete)
-  - Repository pattern kullanımı
-  - AutoMapper entegrasyonu
+- [x] **TShirtService implementasyonu** ✅
+  - CRUD operations (Create, Read, Update, Delete) ✅
+  - Repository pattern kullanımı ✅
+  - AutoMapper entegrasyonu ✅
 
-- [ ] **TShirtController oluşturma**
-  - GET /api/tshirts - Tüm t-shirt'leri listele
-  - GET /api/tshirts/{id} - Tek t-shirt getir
-  - POST /api/tshirts - Yeni t-shirt oluştur
-  - PUT /api/tshirts/{id} - T-shirt güncelle
-  - DELETE /api/tshirts/{id} - T-shirt sil
+- [x] **TShirtController oluşturma** ✅
+  - GET /api/tshirts - Tüm t-shirt'leri listele ✅
+  - GET /api/tshirts/{id} - Tek t-shirt getir ✅
+  - POST /api/tshirts - Yeni t-shirt oluştur ✅
+  - PUT /api/tshirts/{id} - T-shirt güncelle ✅
+  - DELETE /api/tshirts/{id} - T-shirt sil ✅
+  - GET /api/tshirts/active - Aktif t-shirt'ler ✅
+  - GET /api/tshirts/color/{color} - Renk bazlı filtreleme ✅
+  - GET /api/tshirts/size/{size} - Beden bazlı filtreleme ✅
+  - PUT /api/tshirts/{id}/stock - Stok güncelleme ✅
 
 ---
 
@@ -103,10 +107,10 @@
 - [ ] AuthService'i güncelle
 
 ### Gün 2: T-Shirt Yönetimi
-- [ ] TShirtService oluştur
-- [ ] TShirtController oluştur
-- [ ] CRUD operations test et
-- [ ] Swagger'da test et
+- [x] TShirtService oluştur ✅
+- [x] TShirtController oluştur ✅
+- [x] CRUD operations test et ✅
+- [x] Swagger'da test et ✅
 
 ### Gün 3: Sipariş Sistemi
 - [ ] OrderService oluştur
@@ -167,8 +171,14 @@ https://localhost:7000/swagger
 - [x] Veritabanı bağlantısı test edildi
 - [x] Auto Migration özelliği eklendi
 - [x] JWT SecretKey yapılandırması
+- [x] TShirtService implementasyonu (CRUD + filtreleme)
+- [x] TShirtController (8 endpoint)
+- [x] DTOs organizasyonu (entities bazlı klasörler)
+- [x] AutoMapper profili (TShirt mapping)
+- [x] Build hatalarının düzeltilmesi
+- [x] Error handling iyileştirmeleri
 
 ---
 
-**Son Güncelleme:** 2024-09-09  
-**Durum:** MVP'ye %50 tamamlandı
+**Son Güncelleme:** 2024-12-09  
+**Durum:** MVP'ye %75 tamamlandı
