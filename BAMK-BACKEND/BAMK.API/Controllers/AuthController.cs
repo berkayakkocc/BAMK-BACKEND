@@ -5,9 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BAMK.API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    public class AuthController : BaseController
     {
         private readonly IAuthService _authService;
 
@@ -17,40 +15,70 @@ namespace BAMK.API.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<AuthResponseDto>> Login(LoginDto loginDto)
+        public async Task<IActionResult> Login(LoginDto loginDto)
         {
             try
             {
                 var result = await _authService.LoginAsync(loginDto);
-                return Ok(result);
+                var responseData = new
+                {
+                    user = new
+                    {
+                        id = result.Email, // Frontend'in beklediği format
+                        email = result.Email,
+                        name = $"{result.FirstName} {result.LastName}",
+                        firstName = result.FirstName,
+                        lastName = result.LastName,
+                        role = "customer" // Varsayılan rol
+                    },
+                    token = result.Token,
+                    expiresAt = result.ExpiresAt
+                };
+                
+                return SuccessResponse(responseData, "Giriş başarılı");
             }
             catch (UnauthorizedAccessException)
             {
-                return Unauthorized(new { message = "Geçersiz email veya şifre" });
+                return ErrorResponse("Geçersiz email veya şifre", 401);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "Giriş işlemi sırasında hata oluştu", error = ex.Message });
+                return ErrorResponse("Giriş işlemi sırasında hata oluştu", 400);
             }
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<AuthResponseDto>> Register(RegisterDto registerDto)
+        public async Task<IActionResult> Register(RegisterDto registerDto)
         {
             try
             {
                 var result = await _authService.RegisterAsync(registerDto);
-                return Ok(result);
+                var responseData = new
+                {
+                    user = new
+                    {
+                        id = result.Email,
+                        email = result.Email,
+                        name = $"{result.FirstName} {result.LastName}",
+                        firstName = result.FirstName,
+                        lastName = result.LastName,
+                        role = "customer"
+                    },
+                    token = result.Token,
+                    expiresAt = result.ExpiresAt
+                };
+                
+                return SuccessResponse(responseData, "Kayıt başarılı");
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "Kayıt işlemi sırasında hata oluştu", error = ex.Message });
+                return ErrorResponse("Kayıt işlemi sırasında hata oluştu", 400);
             }
         }
 
         [HttpPost("logout")]
         [Authorize]
-        public async Task<ActionResult> Logout()
+        public async Task<IActionResult> Logout()
         {
             try
             {
@@ -58,27 +86,27 @@ namespace BAMK.API.Controllers
                 
                 if (string.IsNullOrEmpty(token))
                 {
-                    return BadRequest(new { message = "Token bulunamadı" });
+                    return ErrorResponse("Token bulunamadı", 400);
                 }
 
                 var result = await _authService.LogoutAsync(token);
                 
                 if (result)
                 {
-                    return Ok(new { message = "Çıkış başarılı" });
+                    return SuccessResponse("Çıkış başarılı");
                 }
                 else
                 {
-                    return BadRequest(new { message = "Geçersiz token" });
+                    return ErrorResponse("Geçersiz token", 400);
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "Çıkış işlemi sırasında hata oluştu", error = ex.Message });
+                return ErrorResponse("Çıkış işlemi sırasında hata oluştu", 400);
             }
         }
 
-        [HttpGet("me")]
+        [HttpGet("profile")]
         [Authorize]
         public IActionResult GetCurrentUser()
         {
@@ -91,17 +119,19 @@ namespace BAMK.API.Controllers
 
                 var userInfo = new
                 {
-                    Id = userId,
-                    Email = email,
-                    FirstName = firstName,
-                    LastName = lastName
+                    id = userId,
+                    email = email,
+                    name = $"{firstName} {lastName}",
+                    firstName = firstName,
+                    lastName = lastName,
+                    role = "customer"
                 };
 
-                return Ok(new { message = "Kullanıcı bilgileri getirildi", data = userInfo });
+                return SuccessResponse(userInfo, "Kullanıcı bilgileri getirildi");
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "Kullanıcı bilgileri alınırken hata oluştu", error = ex.Message });
+                return ErrorResponse("Kullanıcı bilgileri alınırken hata oluştu", 400);
             }
         }
     }

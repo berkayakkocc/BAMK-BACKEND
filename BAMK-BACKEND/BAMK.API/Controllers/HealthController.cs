@@ -2,14 +2,20 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BAMK.API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class HealthController : ControllerBase
+    public class HealthController : BaseController
     {
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(new { Status = "Healthy", Message = "BAMK API is running!" });
+            var healthData = new
+            {
+                status = "Healthy",
+                timestamp = DateTime.UtcNow,
+                version = "1.0.0",
+                environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"
+            };
+            
+            return SuccessResponse(healthData, "BAMK API is running!");
         }
     }
 }

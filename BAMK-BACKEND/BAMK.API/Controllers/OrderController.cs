@@ -6,10 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BAMK.API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
     [Authorize] // Tüm sipariş işlemleri için authentication gerekli
-    public class OrderController : ControllerBase
+    public class OrderController : BaseController
     {
         private readonly IOrderService _orderService;
         private readonly ILogger<OrderController> _logger;
