@@ -23,7 +23,11 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Add AutoMapper
-builder.Services.AddAutoMapper(typeof(BAMK.Application.Mappings.TShirtMappingProfile), typeof(BAMK.Application.Mappings.OrderMappingProfile), typeof(BAMK.Application.Mappings.QuestionMappingProfile));
+builder.Services.AddAutoMapper(
+    typeof(BAMK.Application.Mappings.TShirtMappingProfile),
+    typeof(BAMK.Application.Mappings.OrderMappingProfile),
+    typeof(BAMK.Application.Mappings.QuestionMappingProfile)
+);
 
 // Add Application Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -32,7 +36,6 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 
 // Add JWT Services
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
@@ -65,29 +68,21 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Add CORS
+// ✅ CORS: Sadece frontend'e izin ver
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://127.0.0.1:3000")
-              .AllowAnyMethod()
+        policy.WithOrigins("http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3002")
+               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
-    });
-    
-    // Development için AllowAll policy
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
     });
 });
 
 var app = builder.Build();
 
-// Auto Migration - Veritabanını otomatik güncelle
+// ✅ Veritabanı migration ve test data
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -96,40 +91,38 @@ using (var scope = app.Services.CreateScope())
         context.Database.Migrate();
         Console.WriteLine("✅ Veritabanı başarıyla güncellendi (Auto Migration)");
 
-        // Test verilerini oluştur
         var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
         var tShirtService = scope.ServiceProvider.GetRequiredService<ITShirtService>();
         var questionService = scope.ServiceProvider.GetRequiredService<IQuestionService>();
         var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
-        
+
         var seeder = new TestDataSeeder(userService, tShirtService, questionService, orderService);
         await seeder.SeedAllTestDataAsync();
     }
     catch (Exception ex)
     {
         Console.WriteLine($"❌ Veritabanı güncelleme hatası: {ex.Message}");
-        // Uygulama çalışmaya devam etsin, sadece log yazdır
     }
 }
 
-// Configure the HTTP request pipeline.
+// ✅ Middleware sırası önemli
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "BAMK API v1");
-        c.RoutePrefix = "swagger"; // Swagger UI'ı /swagger adresinde aç
+        c.RoutePrefix = "swagger";
     });
 }
 
-// Ana sayfa yönlendirmesi - Swagger'a yönlendir
 app.MapGet("/", () => Results.Redirect("/swagger/index.html"));
 
 app.UseHttpsRedirection();
-app.UseCors("AllowFrontend");
+app.UseCors("AllowFrontend");           // ❗ CORS middleware burada
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
