@@ -1,0 +1,17 @@
+using BAMK.Core.Entities;
+
+namespace BAMK.Domain.Entities
+{
+    public class Order : BaseEntity
+    {
+        public int UserId { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string Status { get; set; } = "Pending";
+        public string? ShippingAddress { get; set; }
+        public string? Notes { get; set; }
+
+        // Navigation properties
+        public virtual User User { get; set; } = null!;
+        public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    }
+}
