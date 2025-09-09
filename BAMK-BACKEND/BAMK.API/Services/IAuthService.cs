@@ -1,4 +1,4 @@
-using BAMK.API.DTOs;
+using BAMK.Application.DTOs.Auth;
 
 namespace BAMK.API.Services
 {

@@ -11,6 +11,7 @@ namespace BAMK.Core.Interfaces
         Task AddAsync(T entity);
         void Update(T entity);
         void Remove(T entity);
+        Task<int> SaveChangesAsync();
         Task<int> CountAsync();
         Task<int> CountAsync(Expression<Func<T, bool>> predicate);
         Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);

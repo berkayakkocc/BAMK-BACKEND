@@ -65,5 +65,10 @@ namespace BAMK.Infrastructure.Repositories
         {
             return await _dbSet.AnyAsync(predicate);
         }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
     }
 }

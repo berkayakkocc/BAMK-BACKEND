@@ -22,8 +22,12 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 // Add Infrastructure Services
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+// Add AutoMapper
+builder.Services.AddAutoMapper(typeof(BAMK.Application.Mappings.TShirtMappingProfile));
+
 // Add Application Services
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITShirtService, TShirtService>();
 
 // Add JWT Services
 builder.Services.AddScoped<IJwtService, JwtService>();

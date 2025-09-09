@@ -1,29 +1,27 @@
-namespace BAMK.Application.DTOs
+namespace BAMK.Application.DTOs.Auth
 {
-    public class UserDto
-    {
-        public int Id { get; set; }
-        public string Email { get; set; } = string.Empty;
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string? PhoneNumber { get; set; }
-        public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
-
-    public class CreateUserDto
+    public class LoginDto
     {
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+    }
+
+    public class RegisterDto
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
     }
 
-    public class UpdateUserDto
+    public class AuthResponseDto
     {
+        public string Token { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
-        public string? PhoneNumber { get; set; }
+        public DateTime ExpiresAt { get; set; }
     }
 }

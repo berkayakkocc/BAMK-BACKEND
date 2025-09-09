@@ -1,4 +1,4 @@
-using BAMK.API.DTOs;
+using BAMK.Application.DTOs.Auth;
 using BAMK.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

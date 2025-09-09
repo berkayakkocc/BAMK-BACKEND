@@ -1,4 +1,4 @@
-namespace BAMK.Application.DTOs
+namespace BAMK.Application.DTOs.TShirt
 {
     public class TShirtDto
     {

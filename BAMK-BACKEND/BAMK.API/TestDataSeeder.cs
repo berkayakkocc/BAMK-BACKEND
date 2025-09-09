@@ -1,4 +1,4 @@
-using BAMK.Application.DTOs;
+using BAMK.Application.DTOs.User;
 using BAMK.Application.Services;
 using BAMK.Core.Common;
 
