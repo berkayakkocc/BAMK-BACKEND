@@ -1,4 +1,5 @@
 using BAMK.API.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -11,9 +12,9 @@ namespace BAMK.API.Services
         private readonly JwtSettings _jwtSettings;
         private readonly ILogger<JwtService> _logger;
 
-        public JwtService(JwtSettings jwtSettings, ILogger<JwtService> logger)
+        public JwtService(IOptions<JwtSettings> jwtSettings, ILogger<JwtService> logger)
         {
-            _jwtSettings = jwtSettings;
+            _jwtSettings = jwtSettings.Value;
             _logger = logger;
         }
 

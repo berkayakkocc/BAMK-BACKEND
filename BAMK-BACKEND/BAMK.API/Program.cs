@@ -32,6 +32,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 
 // Add JWT Services
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
@@ -112,6 +113,9 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = "swagger"; // Swagger UI'ı /swagger adresinde aç
     });
 }
+
+// Ana sayfa yönlendirmesi - Swagger'a yönlendir
+app.MapGet("/", () => Results.Redirect("/swagger/index.html"));
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
