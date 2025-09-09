@@ -31,6 +31,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+if (jwtSettings?.SecretKey == null)
+{
+    throw new InvalidOperationException("JWT settings not configured properly");
+}
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

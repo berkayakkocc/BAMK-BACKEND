@@ -120,23 +120,23 @@ namespace BAMK.API.Services
             }
         }
 
-        public async Task<bool> LogoutAsync(string token)
+        public Task<bool> LogoutAsync(string token)
         {
             try
             {
                 // JWT token'ı doğrula
                 if (!_jwtService.ValidateToken(token))
                 {
-                    return false;
+                    return Task.FromResult(false);
                 }
 
                 // Logout işlemi (şu an için sadece token doğrulaması)
-                return true;
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Logout işlemi sırasında hata oluştu");
-                return false;
+                return Task.FromResult(false);
             }
         }
     }
