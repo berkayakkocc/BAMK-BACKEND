@@ -25,6 +25,7 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 // Add AutoMapper
 builder.Services.AddAutoMapper(
     typeof(BAMK.Application.Mappings.TShirtMappingProfile),
+    typeof(BAMK.Application.Mappings.ProductDetailMappingProfile),
     typeof(BAMK.Application.Mappings.OrderMappingProfile),
     typeof(BAMK.Application.Mappings.QuestionMappingProfile)
 );
@@ -32,6 +33,7 @@ builder.Services.AddAutoMapper(
 // Add Application Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITShirtService, TShirtService>();
+builder.Services.AddScoped<IProductDetailService, ProductDetailService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 
@@ -93,10 +95,11 @@ using (var scope = app.Services.CreateScope())
 
         var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
         var tShirtService = scope.ServiceProvider.GetRequiredService<ITShirtService>();
+        var productDetailService = scope.ServiceProvider.GetRequiredService<IProductDetailService>();
         var questionService = scope.ServiceProvider.GetRequiredService<IQuestionService>();
         var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
 
-        var seeder = new TestDataSeeder(userService, tShirtService, questionService, orderService);
+        var seeder = new TestDataSeeder(userService, tShirtService, productDetailService, questionService, orderService);
         await seeder.SeedAllTestDataAsync();
     }
     catch (Exception ex)

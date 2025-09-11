@@ -4,6 +4,7 @@ using BAMK.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BAMK.Infrastructure.Migrations
 {
     [DbContext(typeof(BAMKDbContext))]
-    partial class BAMKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250911073424_AddProductDetailEntity")]
+    partial class AddProductDetailEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,7 +33,7 @@ namespace BAMK.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AnswerContent")
+                    b.Property<string>("Content")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
@@ -38,7 +41,7 @@ namespace BAMK.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsAcceptedAnswer")
+                    b.Property<bool>("IsAccepted")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsActive")
@@ -56,11 +59,16 @@ namespace BAMK.Infrastructure.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("UserId1")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("QuestionId");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserId1");
 
                     b.ToTable("Answers");
                 });
@@ -79,13 +87,8 @@ namespace BAMK.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("OrderNotes")
+                    b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("OrderStatus")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
@@ -93,6 +96,11 @@ namespace BAMK.Infrastructure.Migrations
 
                     b.Property<string>("ShippingAddress")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
@@ -103,9 +111,14 @@ namespace BAMK.Infrastructure.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("UserId1")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserId1");
 
                     b.ToTable("Orders");
                 });
@@ -133,6 +146,9 @@ namespace BAMK.Infrastructure.Migrations
                     b.Property<int>("TShirtId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("TShirtId1")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(18,2)");
 
@@ -147,6 +163,8 @@ namespace BAMK.Infrastructure.Migrations
                     b.HasIndex("OrderId");
 
                     b.HasIndex("TShirtId");
+
+                    b.HasIndex("TShirtId1");
 
                     b.ToTable("OrderItems");
                 });
@@ -208,8 +226,7 @@ namespace BAMK.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TShirtId")
-                        .IsUnique();
+                    b.HasIndex("TShirtId");
 
                     b.ToTable("ProductDetails");
                 });
@@ -221,6 +238,11 @@ namespace BAMK.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -234,12 +256,7 @@ namespace BAMK.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("QuestionContent")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("QuestionTitle")
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -250,9 +267,14 @@ namespace BAMK.Infrastructure.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("UserId1")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserId1");
 
                     b.ToTable("Questions");
                 });
@@ -366,10 +388,14 @@ namespace BAMK.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("BAMK.Domain.Entities.User", "User")
-                        .WithMany("Answers")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("BAMK.Domain.Entities.User", null)
+                        .WithMany("Answers")
+                        .HasForeignKey("UserId1");
 
                     b.Navigation("Question");
 
@@ -379,10 +405,14 @@ namespace BAMK.Infrastructure.Migrations
             modelBuilder.Entity("BAMK.Domain.Entities.Order", b =>
                 {
                     b.HasOne("BAMK.Domain.Entities.User", "User")
-                        .WithMany("Orders")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("BAMK.Domain.Entities.User", null)
+                        .WithMany("Orders")
+                        .HasForeignKey("UserId1");
 
                     b.Navigation("User");
                 });
@@ -396,10 +426,14 @@ namespace BAMK.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("BAMK.Domain.Entities.TShirt", "TShirt")
-                        .WithMany("OrderItems")
+                        .WithMany()
                         .HasForeignKey("TShirtId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("BAMK.Domain.Entities.TShirt", null)
+                        .WithMany("OrderItems")
+                        .HasForeignKey("TShirtId1");
 
                     b.Navigation("Order");
 
@@ -409,8 +443,8 @@ namespace BAMK.Infrastructure.Migrations
             modelBuilder.Entity("BAMK.Domain.Entities.ProductDetail", b =>
                 {
                     b.HasOne("BAMK.Domain.Entities.TShirt", "TShirt")
-                        .WithOne("ProductDetail")
-                        .HasForeignKey("BAMK.Domain.Entities.ProductDetail", "TShirtId")
+                        .WithMany()
+                        .HasForeignKey("TShirtId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -420,10 +454,14 @@ namespace BAMK.Infrastructure.Migrations
             modelBuilder.Entity("BAMK.Domain.Entities.Question", b =>
                 {
                     b.HasOne("BAMK.Domain.Entities.User", "User")
-                        .WithMany("Questions")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("BAMK.Domain.Entities.User", null)
+                        .WithMany("Questions")
+                        .HasForeignKey("UserId1");
 
                     b.Navigation("User");
                 });
@@ -441,8 +479,6 @@ namespace BAMK.Infrastructure.Migrations
             modelBuilder.Entity("BAMK.Domain.Entities.TShirt", b =>
                 {
                     b.Navigation("OrderItems");
-
-                    b.Navigation("ProductDetail");
                 });
 
             modelBuilder.Entity("BAMK.Domain.Entities.User", b =>

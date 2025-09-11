@@ -105,7 +105,7 @@ namespace BAMK.Application.Services
                 {
                     UserId = createOrderDto.UserId,
                     TotalAmount = totalResult.Value,
-                    Status = "Pending",
+                    OrderStatus = "Pending",
                     PaymentStatus = "Pending",
                     ShippingAddress = createOrderDto.ShippingAddress,
                     CreatedAt = DateTime.UtcNow
@@ -157,7 +157,7 @@ namespace BAMK.Application.Services
                     return Result<OrderDto>.Failure(Error.NotFound($"ID {id} olan sipariş bulunamadı"));
                 }
 
-                order.Status = updateStatusDto.Status;
+                order.OrderStatus = updateStatusDto.Status;
                 order.UpdatedAt = DateTime.UtcNow;
 
                 _orderRepository.Update(order);
@@ -225,7 +225,7 @@ namespace BAMK.Application.Services
         {
             try
             {
-                var orders = await _orderRepository.FindAsync(o => o.Status == status);
+                var orders = await _orderRepository.FindAsync(o => o.OrderStatus == status);
                 var orderDtos = _mapper.Map<IEnumerable<OrderDto>>(orders);
                 return Result<IEnumerable<OrderDto>>.Success(orderDtos);
             }

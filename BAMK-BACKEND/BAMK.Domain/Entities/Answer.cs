@@ -4,10 +4,10 @@ namespace BAMK.Domain.Entities
 {
     public class Answer : BaseEntity
     {
-        public string Content { get; set; } = string.Empty;
+        public string AnswerContent { get; set; } = string.Empty;
         public int QuestionId { get; set; }
         public int UserId { get; set; }
-        public bool IsAccepted { get; set; } = false;
+        public bool IsAcceptedAnswer { get; set; } = false;
         public bool IsActive { get; set; } = true;
 
         // Navigation properties

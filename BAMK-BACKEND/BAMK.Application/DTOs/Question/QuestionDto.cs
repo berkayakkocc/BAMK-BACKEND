@@ -5,8 +5,8 @@ namespace BAMK.Application.DTOs.Question;
 public class QuestionDto
 {
     public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
+    public string QuestionTitle { get; set; } = string.Empty;
+    public string QuestionContent { get; set; } = string.Empty;
     public int UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
@@ -17,21 +17,21 @@ public class QuestionDto
 
 public class CreateQuestionDto
 {
-    public string Title { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
+    public string QuestionTitle { get; set; } = string.Empty;
+    public string QuestionContent { get; set; } = string.Empty;
     public int UserId { get; set; }
 }
 
 public class UpdateQuestionDto
 {
-    public string Title { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
+    public string QuestionTitle { get; set; } = string.Empty;
+    public string QuestionContent { get; set; } = string.Empty;
 }
 
 public class AnswerDto
 {
     public int Id { get; set; }
-    public string Content { get; set; } = string.Empty;
+    public string AnswerContent { get; set; } = string.Empty;
     public int QuestionId { get; set; }
     public int UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
@@ -42,12 +42,12 @@ public class AnswerDto
 
 public class CreateAnswerDto
 {
-    public string Content { get; set; } = string.Empty;
+    public string AnswerContent { get; set; } = string.Empty;
     public int QuestionId { get; set; }
     public int UserId { get; set; }
 }
 
 public class UpdateAnswerDto
 {
-    public string Content { get; set; } = string.Empty;
+    public string AnswerContent { get; set; } = string.Empty;
 }

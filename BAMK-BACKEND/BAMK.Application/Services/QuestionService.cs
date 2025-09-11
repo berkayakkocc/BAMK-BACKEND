@@ -118,8 +118,8 @@ public class QuestionService : IQuestionService
                 return Result<QuestionDto>.Failure(Error.Create(ErrorCode.NotFound, "Soru bulunamadı"));
             }
 
-            question.Title = updateQuestionDto.Title;
-            question.Content = updateQuestionDto.Content;
+            question.QuestionTitle = updateQuestionDto.QuestionTitle;
+            question.QuestionContent = updateQuestionDto.QuestionContent;
             question.UpdatedAt = DateTime.UtcNow;
 
             await _questionRepository.UpdateAsync(question);
@@ -288,7 +288,7 @@ public class QuestionService : IQuestionService
                 return Result<AnswerDto>.Failure(Error.Create(ErrorCode.NotFound, "Cevap bulunamadı"));
             }
 
-            answer.Content = updateAnswerDto.Content;
+            answer.AnswerContent = updateAnswerDto.AnswerContent;
             answer.UpdatedAt = DateTime.UtcNow;
 
             await _answerRepository.UpdateAsync(answer);

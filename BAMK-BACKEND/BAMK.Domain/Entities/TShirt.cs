@@ -15,5 +15,6 @@ namespace BAMK.Domain.Entities
 
         // Navigation properties
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public virtual ProductDetail? ProductDetail { get; set; }
     }
 }
