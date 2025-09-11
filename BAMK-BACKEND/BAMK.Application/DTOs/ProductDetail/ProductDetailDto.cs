@@ -44,3 +44,4 @@ namespace BAMK.Application.DTOs.ProductDetail
         public bool IsActive { get; set; }
     }
 }
+

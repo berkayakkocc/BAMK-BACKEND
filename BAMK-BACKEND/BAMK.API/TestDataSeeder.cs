@@ -118,6 +118,7 @@ namespace BAMK.API
                         Color = "Siyah",
                         Size = "M",
                         StockQuantity = 50,
+                        ImageUrl = "https://i.hizliresim.com/et5qfcq.jpg",
                         IsActive = true
                     },
                     new CreateTShirtDto
@@ -158,6 +159,7 @@ namespace BAMK.API
                         Color = "Siyah",
                         Size = "M",
                         StockQuantity = 20,
+                        ImageUrl = "https://i.hizliresim.com/et5qfcq.jpg",
                         IsActive = true
                     },
                     new CreateTShirtDto

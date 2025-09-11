@@ -19,3 +19,4 @@ namespace BAMK.Domain.Entities
         public virtual TShirt TShirt { get; set; } = null!;
     }
 }
+

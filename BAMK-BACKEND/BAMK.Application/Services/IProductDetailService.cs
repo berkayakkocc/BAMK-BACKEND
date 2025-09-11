@@ -15,3 +15,4 @@ namespace BAMK.Application.Services
         Task<Result<bool>> UpdateStatusAsync(int id, bool isActive);
     }
 }
+

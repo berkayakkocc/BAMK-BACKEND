@@ -14,3 +14,4 @@ namespace BAMK.Application.Mappings
         }
     }
 }
+
