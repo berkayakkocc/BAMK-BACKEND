@@ -12,12 +12,10 @@ namespace BAMK.API.Controllers
     public class OrderController : BaseController
     {
         private readonly IOrderService _orderService;
-        private readonly ILogger<OrderController> _logger;
 
-        public OrderController(IOrderService orderService, ILogger<OrderController> logger)
+        public OrderController(IOrderService orderService, ILogger<OrderController> logger) : base(logger)
         {
             _orderService = orderService;
-            _logger = logger;
         }
 
         /// <summary>

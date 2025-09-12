@@ -2,6 +2,7 @@ using BAMK.Application.DTOs.Auth;
 using BAMK.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace BAMK.API.Controllers
 {
@@ -9,7 +10,7 @@ namespace BAMK.API.Controllers
     {
         private readonly IAuthService _authService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, ILogger<AuthController> logger) : base(logger)
         {
             _authService = authService;
         }

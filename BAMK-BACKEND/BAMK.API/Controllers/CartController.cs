@@ -1,31 +1,32 @@
-using BAMK.API.Services;
+using BAMK.Application.DTOs.Cart;
+using BAMK.Application.Services;
 using BAMK.Core.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BAMK.API.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize] // Tüm cart işlemleri için authentication gerekli
     public class CartController : BaseController
     {
-        private readonly ICartService _cartService;
-        private readonly ILogger<CartController> _logger;
+        private readonly BAMK.Application.Services.ICartService _cartService;
 
-        public CartController(ICartService cartService, ILogger<CartController> logger)
+        public CartController(BAMK.Application.Services.ICartService cartService, ILogger<CartController> logger) : base(logger)
         {
             _cartService = cartService;
-            _logger = logger;
         }
 
         /// <summary>
         /// Kullanıcının sepetini getirir
         /// </summary>
         [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> GetCart()
+        public async Task<IActionResult> GetCart([FromQuery] int userId)
         {
             try
             {
-                var result = await _cartService.GetCartAsync();
+                var result = await _cartService.GetCartAsync(userId);
                 if (!result.IsSuccess)
                 {
                     return ErrorResponse("Sepet getirilirken hata oluştu", 400);
@@ -44,12 +45,11 @@ namespace BAMK.API.Controllers
         /// Sepete ürün ekler
         /// </summary>
         [HttpPost("items")]
-        [Authorize]
-        public async Task<IActionResult> AddToCart([FromBody] AddToCartRequest request)
+        public async Task<IActionResult> AddToCart([FromBody] AddToCartDto dto, [FromQuery] int userId)
         {
             try
             {
-                var result = await _cartService.AddToCartAsync(request.ProductId, request.Quantity);
+                var result = await _cartService.AddToCartAsync(userId, dto);
                 if (!result.IsSuccess)
                 {
                     if (result.Error?.Code == ErrorCode.NotFound)
@@ -69,15 +69,60 @@ namespace BAMK.API.Controllers
         }
 
         /// <summary>
-        /// Sepet özetini getirir
+        /// Sepet öğesini günceller
         /// </summary>
-        [HttpGet("summary")]
-        [Authorize]
-        public async Task<IActionResult> GetCartSummary()
+        [HttpPut("items")]
+        public async Task<IActionResult> UpdateCartItem([FromBody] UpdateCartItemDto dto, [FromQuery] int userId)
         {
             try
             {
-                var result = await _cartService.GetCartSummaryAsync();
+                var result = await _cartService.UpdateCartItemAsync(userId, dto);
+                if (!result.IsSuccess)
+                {
+                    return ErrorResponse(result.Error?.Message ?? "Sepet öğesi güncellenirken hata oluştu", 400);
+                }
+
+                return SuccessResponse(result.Value, "Sepet öğesi güncellendi");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Sepet öğesi güncellenirken hata oluştu");
+                return ErrorResponse("Sepet öğesi güncellenirken hata oluştu", 500);
+            }
+        }
+
+        /// <summary>
+        /// Sepetten ürün çıkarır
+        /// </summary>
+        [HttpDelete("items/{cartItemId}")]
+        public async Task<IActionResult> RemoveFromCart(int cartItemId, [FromQuery] int userId)
+        {
+            try
+            {
+                var result = await _cartService.RemoveFromCartAsync(userId, cartItemId);
+                if (!result.IsSuccess)
+                {
+                    return ErrorResponse(result.Error?.Message ?? "Ürün sepetten çıkarılırken hata oluştu", 400);
+                }
+
+                return SuccessResponse("Ürün sepetten çıkarıldı");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ürün sepetten çıkarılırken hata oluştu");
+                return ErrorResponse("Ürün sepetten çıkarılırken hata oluştu", 500);
+            }
+        }
+
+        /// <summary>
+        /// Sepet özetini getirir
+        /// </summary>
+        [HttpGet("summary")]
+        public async Task<IActionResult> GetCartSummary([FromQuery] int userId)
+        {
+            try
+            {
+                var result = await _cartService.GetCartSummaryAsync(userId);
                 if (!result.IsSuccess)
                 {
                     return ErrorResponse("Sepet özeti getirilirken hata oluştu", 400);
@@ -96,12 +141,11 @@ namespace BAMK.API.Controllers
         /// Sepeti temizler
         /// </summary>
         [HttpDelete]
-        [Authorize]
-        public async Task<IActionResult> ClearCart()
+        public async Task<IActionResult> ClearCart([FromQuery] int userId)
         {
             try
             {
-                var result = await _cartService.ClearCartAsync();
+                var result = await _cartService.ClearCartAsync(userId);
                 if (!result.IsSuccess)
                 {
                     return ErrorResponse("Sepet temizlenirken hata oluştu", 400);
@@ -115,11 +159,5 @@ namespace BAMK.API.Controllers
                 return ErrorResponse("Sepet temizlenirken hata oluştu", 500);
             }
         }
-    }
-
-    public class AddToCartRequest
-    {
-        public string ProductId { get; set; } = string.Empty;
-        public int Quantity { get; set; } = 1;
     }
 }

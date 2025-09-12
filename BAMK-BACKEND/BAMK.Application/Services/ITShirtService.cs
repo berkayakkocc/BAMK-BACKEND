@@ -20,5 +20,9 @@ namespace BAMK.Application.Services
         Task<Result<IEnumerable<TShirtDto>>> GetByCategoryAsync(string category);
         Task<Result<IEnumerable<TShirtDto>>> GetPagedAsync(int page, int limit, string? search = null, string? category = null);
         Task<Result<IEnumerable<TShirtDto>>> GetFeaturedAsync(int limit = 8);
+        
+        // Pagination methods
+        Task<Result<PagedResult<TShirtDto>>> GetPagedProductsAsync(int page, int pageSize);
+        Task<Result<PagedResult<TShirtDto>>> GetPagedProductsAsync(int page, int pageSize, string? search = null, string? category = null);
     }
 }

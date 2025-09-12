@@ -8,15 +8,13 @@ namespace BAMK.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ProductDetailController : ControllerBase
+    public class ProductDetailController : BaseController
     {
         private readonly IProductDetailService _productDetailService;
-        private readonly ILogger<ProductDetailController> _logger;
 
-        public ProductDetailController(IProductDetailService productDetailService, ILogger<ProductDetailController> logger)
+        public ProductDetailController(IProductDetailService productDetailService, ILogger<ProductDetailController> logger) : base(logger)
         {
             _productDetailService = productDetailService;
-            _logger = logger;
         }
 
         /// <summary>

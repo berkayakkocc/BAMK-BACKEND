@@ -68,9 +68,14 @@ public class QuestionService : IQuestionService
     {
         try
         {
-            var questions = await _questionRepository.GetAllAsync();
-            var userQuestions = questions.Where(q => q.UserId == userId);
-            var questionDtos = _mapper.Map<IEnumerable<QuestionDto>>(userQuestions);
+            // ✅ OPTIMIZED: Database'de filtreleme yap
+            var questions = await _questionRepository.FindWithIncludesAsync(
+                q => q.UserId == userId,
+                q => q.User,
+                q => q.Answers
+            );
+            
+            var questionDtos = _mapper.Map<IEnumerable<QuestionDto>>(questions);
             return Result<IEnumerable<QuestionDto>>.Success(questionDtos);
         }
         catch (Exception ex)
@@ -122,7 +127,7 @@ public class QuestionService : IQuestionService
             question.QuestionContent = updateQuestionDto.QuestionContent;
             question.UpdatedAt = DateTime.UtcNow;
 
-            await _questionRepository.UpdateAsync(question);
+            _questionRepository.UpdateAsync(question);
             await _questionRepository.SaveChangesAsync();
 
             var questionDto = _mapper.Map<QuestionDto>(question);
@@ -145,7 +150,7 @@ public class QuestionService : IQuestionService
                 return Result<bool>.Failure(Error.Create(ErrorCode.NotFound, "Soru bulunamadı"));
             }
 
-            await _questionRepository.DeleteAsync(question);
+            _questionRepository.DeleteAsync(question);
             await _questionRepository.SaveChangesAsync();
 
             return Result<bool>.Success(true);
@@ -170,7 +175,7 @@ public class QuestionService : IQuestionService
             question.IsActive = true;
             question.UpdatedAt = DateTime.UtcNow;
 
-            await _questionRepository.UpdateAsync(question);
+            _questionRepository.UpdateAsync(question);
             await _questionRepository.SaveChangesAsync();
 
             return Result<bool>.Success(true);
@@ -195,7 +200,7 @@ public class QuestionService : IQuestionService
             question.IsActive = false;
             question.UpdatedAt = DateTime.UtcNow;
 
-            await _questionRepository.UpdateAsync(question);
+            _questionRepository.UpdateAsync(question);
             await _questionRepository.SaveChangesAsync();
 
             return Result<bool>.Success(true);
@@ -291,7 +296,7 @@ public class QuestionService : IQuestionService
             answer.AnswerContent = updateAnswerDto.AnswerContent;
             answer.UpdatedAt = DateTime.UtcNow;
 
-            await _answerRepository.UpdateAsync(answer);
+            _answerRepository.UpdateAsync(answer);
             await _answerRepository.SaveChangesAsync();
 
             var answerDto = _mapper.Map<AnswerDto>(answer);
@@ -314,7 +319,7 @@ public class QuestionService : IQuestionService
                 return Result<bool>.Failure(Error.Create(ErrorCode.NotFound, "Cevap bulunamadı"));
             }
 
-            await _answerRepository.DeleteAsync(answer);
+            _answerRepository.DeleteAsync(answer);
             await _answerRepository.SaveChangesAsync();
 
             return Result<bool>.Success(true);
@@ -339,7 +344,7 @@ public class QuestionService : IQuestionService
             answer.IsActive = true;
             answer.UpdatedAt = DateTime.UtcNow;
 
-            await _answerRepository.UpdateAsync(answer);
+            _answerRepository.UpdateAsync(answer);
             await _answerRepository.SaveChangesAsync();
 
             return Result<bool>.Success(true);
@@ -364,7 +369,7 @@ public class QuestionService : IQuestionService
             answer.IsActive = false;
             answer.UpdatedAt = DateTime.UtcNow;
 
-            await _answerRepository.UpdateAsync(answer);
+            _answerRepository.UpdateAsync(answer);
             await _answerRepository.SaveChangesAsync();
 
             return Result<bool>.Success(true);

@@ -84,27 +84,39 @@ namespace BAMK.Application.Services
         {
             try
             {
+                _logger.LogInformation($"ProductDetail oluşturuluyor - TShirtId: {createProductDetailDto.TShirtId}");
+                
                 // Aynı TShirt için zaten ProductDetail var mı kontrol et
                 var existingDetails = await _productDetailRepository.FindAsync(pd => pd.TShirtId == createProductDetailDto.TShirtId);
+                _logger.LogInformation($"Mevcut ProductDetail sayısı: {existingDetails.Count()}");
+                
                 if (existingDetails.Any())
                 {
+                    _logger.LogWarning($"TShirtId {createProductDetailDto.TShirtId} için zaten ProductDetail mevcut");
                     return Result<ProductDetailDto>.Failure(Error.Create(ErrorCode.ValidationError, "Bu TShirt için zaten ürün detayı mevcut"));
                 }
 
+                _logger.LogInformation($"ProductDetail mapping yapılıyor...");
                 var productDetail = _mapper.Map<Domain.Entities.ProductDetail>(createProductDetailDto);
-                productDetail.IsActive = true;
                 productDetail.CreatedAt = DateTime.UtcNow;
                 productDetail.UpdatedAt = DateTime.UtcNow;
+                
+                _logger.LogInformation($"ProductDetail entity oluşturuldu - Id: {productDetail.Id}, TShirtId: {productDetail.TShirtId}");
 
+                _logger.LogInformation($"ProductDetail repository'ye ekleniyor...");
                 await _productDetailRepository.AddAsync(productDetail);
+                
+                _logger.LogInformation($"ProductDetail değişiklikleri kaydediliyor...");
                 await _productDetailRepository.SaveChangesAsync();
+                
+                _logger.LogInformation($"ProductDetail başarıyla oluşturuldu - Id: {productDetail.Id}");
 
                 var productDetailDto = _mapper.Map<ProductDetailDto>(productDetail);
                 return Result<ProductDetailDto>.Success(productDetailDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ürün detayı oluştururken hata oluştu");
+                _logger.LogError(ex, $"Ürün detayı oluştururken hata oluştu - TShirtId: {createProductDetailDto.TShirtId}");
                 return Result<ProductDetailDto>.Failure(Error.Create(ErrorCode.InvalidOperation, "Ürün detayı oluşturulamadı"));
             }
         }

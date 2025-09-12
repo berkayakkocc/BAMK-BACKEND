@@ -11,16 +11,14 @@ namespace BAMK.API.Controllers
     {
         private readonly ITShirtService _tShirtService;
         private readonly IProductMappingService _productMappingService;
-        private readonly ILogger<ProductsController> _logger;
 
         public ProductsController(
             ITShirtService tShirtService, 
             IProductMappingService productMappingService,
-            ILogger<ProductsController> logger)
+            ILogger<ProductsController> logger) : base(logger)
         {
             _tShirtService = tShirtService;
             _productMappingService = productMappingService;
-            _logger = logger;
         }
 
         /// <summary>
@@ -31,21 +29,19 @@ namespace BAMK.API.Controllers
         {
             try
             {
-                var result = await _tShirtService.GetPagedAsync(page, limit, search, category);
+                // ✅ OPTIMIZED: PagedResult kullan
+                var result = await _tShirtService.GetPagedProductsAsync(page, limit, search, category);
                 if (!result.IsSuccess)
                 {
                     return ErrorResponse("Ürünler getirilirken hata oluştu", 400);
                 }
 
-                // Get total count for pagination
-                var totalResult = await _tShirtService.GetAllAsync();
-                if (!totalResult.IsSuccess)
-                {
-                    return ErrorResponse("Ürünler getirilirken hata oluştu", 400);
-                }
-
-                var total = totalResult.Value.Count();
-                return Ok(_productMappingService.MapToFrontendFormatWithPagination(result.Value, page, limit, total));
+                // PagedResult zaten total count içeriyor
+                return Ok(_productMappingService.MapToFrontendFormatWithPagination(
+                    result.Value.Items, 
+                    result.Value.Page, 
+                    result.Value.PageSize, 
+                    result.Value.TotalCount));
             }
             catch (Exception ex)
             {

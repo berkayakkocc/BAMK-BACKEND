@@ -14,16 +14,14 @@ public class QuestionController : BaseController
 {
     private readonly IQuestionService _questionService;
     private readonly IMapper _mapper;
-    private readonly ILogger<QuestionController> _logger;
 
     public QuestionController(
         IQuestionService questionService,
         IMapper mapper,
-        ILogger<QuestionController> logger)
+        ILogger<QuestionController> logger) : base(logger)
     {
         _questionService = questionService;
         _mapper = mapper;
-        _logger = logger;
     }
 
     /// <summary>

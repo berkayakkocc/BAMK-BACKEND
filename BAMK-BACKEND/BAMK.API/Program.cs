@@ -3,8 +3,10 @@ using BAMK.API.Configuration;
 using BAMK.API.Middleware;
 using BAMK.API.Services;
 using BAMK.Application.Services;
+using BAMK.Application.Validation;
 using BAMK.Infrastructure.Data;
 using BAMK.Infrastructure.Extensions;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,6 +16,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// ✅ Add FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<CreateTShirtDtoValidator>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -28,7 +34,9 @@ builder.Services.AddAutoMapper(
     typeof(BAMK.Application.Mappings.TShirtMappingProfile),
     typeof(BAMK.Application.Mappings.ProductDetailMappingProfile),
     typeof(BAMK.Application.Mappings.OrderMappingProfile),
-    typeof(BAMK.Application.Mappings.QuestionMappingProfile)
+    typeof(BAMK.Application.Mappings.QuestionMappingProfile),
+    typeof(BAMK.Application.Mappings.CartMappingProfile),
+    typeof(BAMK.Application.Mappings.UserMappingProfile) // Added for User
 );
 
 // Add Application Services
@@ -37,6 +45,8 @@ builder.Services.AddScoped<ITShirtService, TShirtService>();
 builder.Services.AddScoped<IProductDetailService, ProductDetailService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
+builder.Services.AddScoped<IValidationService, ValidationService>();
+builder.Services.AddScoped<BAMK.Application.Services.ICartService, BAMK.Application.Services.CartService>();
 
 // Add JWT Services
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -45,6 +55,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Add API Services
 builder.Services.AddScoped<IProductMappingService, ProductMappingService>();
 builder.Services.AddScoped<ICartService, CartService>();
+
+// ✅ Add Caching
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<BAMK.Core.Interfaces.ICacheService, BAMK.Core.Services.CacheService>();
+builder.Services.AddScoped<BAMK.Core.Interfaces.ILoggingService, BAMK.Core.Services.LoggingService>();
 
 // Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
@@ -104,7 +119,19 @@ using (var scope = app.Services.CreateScope())
         var questionService = scope.ServiceProvider.GetRequiredService<IQuestionService>();
         var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
 
-        var seeder = new TestDataSeeder(userService, tShirtService, productDetailService, questionService, orderService);
+        var cartService = scope.ServiceProvider.GetRequiredService<BAMK.Application.Services.ICartService>();
+        var seeder = new TestDataSeeder(userService, tShirtService, productDetailService, questionService, orderService, cartService, context);
+        
+        // Environment variable ile database reset kontrolü
+        var resetDatabase = Environment.GetEnvironmentVariable("RESET_DATABASE");
+        if (resetDatabase?.ToLower() == "true")
+        {
+            Console.WriteLine("🗑️ Database sıfırlanıyor...");
+            await context.Database.EnsureDeletedAsync();
+            await context.Database.EnsureCreatedAsync();
+            Console.WriteLine("✅ Database sıfırlandı");
+        }
+        
         await seeder.SeedAllTestDataAsync();
     }
     catch (Exception ex)
@@ -128,6 +155,7 @@ app.MapGet("/", () => Results.Redirect("/swagger/index.html"));
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");           // ❗ CORS middleware burada
+app.UseMiddleware<ValidationMiddleware>(); // ✅ Validation middleware
 app.UseMiddleware<GlobalExceptionMiddleware>(); // Global exception handling
 app.UseAuthentication();
 app.UseAuthorization();

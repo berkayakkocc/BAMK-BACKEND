@@ -2,7 +2,6 @@ using BAMK.Application.DTOs.User;
 using BAMK.Core.Common;
 using BAMK.Core.Interfaces;
 using BAMK.Domain.Entities;
-using BAMK.Domain.Interfaces;
 using AutoMapper;
 
 namespace BAMK.Application.Services

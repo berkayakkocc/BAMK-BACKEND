@@ -51,7 +51,11 @@ namespace BAMK.Application.Services
         {
             try
             {
-                var order = await _orderRepository.GetByIdAsync(id);
+                var order = await _orderRepository.GetByIdWithIncludesAsync(id, 
+                    o => o.User, 
+                    o => o.OrderItems, 
+                    o => o.OrderItems.Select(oi => oi.TShirt));
+                    
                 if (order == null)
                 {
                     return Result<OrderDto?>.Failure(Error.NotFound($"ID {id} olan sipariş bulunamadı"));
@@ -71,7 +75,11 @@ namespace BAMK.Application.Services
         {
             try
             {
-                var orders = await _orderRepository.FindAsync(o => o.UserId == userId);
+                var orders = await _orderRepository.FindWithIncludesAsync(o => o.UserId == userId,
+                    o => o.User,
+                    o => o.OrderItems,
+                    o => o.OrderItems.Select(oi => oi.TShirt));
+                    
                 var orderDtos = _mapper.Map<IEnumerable<OrderDto>>(orders);
                 return Result<IEnumerable<OrderDto>>.Success(orderDtos);
             }
@@ -86,59 +94,82 @@ namespace BAMK.Application.Services
         {
             try
             {
-                // Kullanıcı kontrolü
-                var user = await _userRepository.GetByIdAsync(createOrderDto.UserId);
-                if (user == null)
+                // Transaction başlat
+                using var transaction = await _orderRepository.BeginTransactionAsync();
+                
+                try
                 {
-                    return Result<OrderDto>.Failure(Error.NotFound($"Kullanıcı bulunamadı: {createOrderDto.UserId}"));
-                }
-
-                // Toplam tutarı hesapla
-                var totalResult = await CalculateTotalAsync(createOrderDto.OrderItems);
-                if (!totalResult.IsSuccess)
-                {
-                    return Result<OrderDto>.Failure(totalResult.Error!);
-                }
-
-                // Sipariş oluştur
-                var order = new Order
-                {
-                    UserId = createOrderDto.UserId,
-                    TotalAmount = totalResult.Value,
-                    OrderStatus = "Pending",
-                    PaymentStatus = "Pending",
-                    ShippingAddress = createOrderDto.ShippingAddress,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                await _orderRepository.AddAsync(order);
-                await _orderRepository.SaveChangesAsync();
-
-                // Sipariş kalemlerini oluştur
-                foreach (var itemDto in createOrderDto.OrderItems)
-                {
-                    var tShirt = await _tShirtRepository.GetByIdAsync(itemDto.TShirtId);
-                    if (tShirt == null)
+                    // Kullanıcı kontrolü
+                    var user = await _userRepository.GetByIdAsync(createOrderDto.UserId);
+                    if (user == null)
                     {
-                        return Result<OrderDto>.Failure(Error.NotFound($"T-shirt bulunamadı: {itemDto.TShirtId}"));
+                        return Result<OrderDto>.Failure(Error.NotFound($"Kullanıcı bulunamadı: {createOrderDto.UserId}"));
                     }
 
-                    var orderItem = new OrderItem
+                    // Toplam tutarı hesapla
+                    var totalResult = await CalculateTotalAsync(createOrderDto.OrderItems);
+                    if (!totalResult.IsSuccess)
                     {
-                        OrderId = order.Id,
-                        TShirtId = itemDto.TShirtId,
-                        UnitPrice = tShirt.Price,
-                        Quantity = itemDto.Quantity,
-                        TotalPrice = tShirt.Price * itemDto.Quantity
+                        return Result<OrderDto>.Failure(totalResult.Error!);
+                    }
+
+                    // Sipariş oluştur
+                    var order = new Order
+                    {
+                        UserId = createOrderDto.UserId,
+                        TotalAmount = totalResult.Value,
+                        OrderStatus = "Pending",
+                        PaymentStatus = "Pending",
+                        ShippingAddress = createOrderDto.ShippingAddress,
+                        CreatedAt = DateTime.UtcNow
                     };
 
-                    await _orderItemRepository.AddAsync(orderItem);
+                    await _orderRepository.AddAsync(order);
+                    await _orderRepository.SaveChangesAsync();
+
+                    // Sipariş kalemlerini oluştur
+                    foreach (var itemDto in createOrderDto.OrderItems)
+                    {
+                        var tShirt = await _tShirtRepository.GetByIdAsync(itemDto.TShirtId);
+                        if (tShirt == null)
+                        {
+                            await transaction.RollbackAsync();
+                            return Result<OrderDto>.Failure(Error.NotFound($"T-shirt bulunamadı: {itemDto.TShirtId}"));
+                        }
+
+                        // Stok kontrolü ve güncelleme
+                        if (tShirt.StockQuantity < itemDto.Quantity)
+                        {
+                            await transaction.RollbackAsync();
+                            return Result<OrderDto>.Failure(Error.Create(ErrorCode.ValidationError, $"Yetersiz stok: {tShirt.Name}"));
+                        }
+
+                        tShirt.StockQuantity -= itemDto.Quantity;
+                        _tShirtRepository.Update(tShirt);
+
+                        var orderItem = new OrderItem
+                        {
+                            OrderId = order.Id,
+                            TShirtId = itemDto.TShirtId,
+                            UnitPrice = tShirt.Price,
+                            Quantity = itemDto.Quantity,
+                            TotalPrice = tShirt.Price * itemDto.Quantity
+                        };
+
+                        await _orderItemRepository.AddAsync(orderItem);
+                    }
+
+                    await _orderItemRepository.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    var orderDto = _mapper.Map<OrderDto>(order);
+                    return Result<OrderDto>.Success(orderDto);
                 }
-
-                await _orderItemRepository.SaveChangesAsync();
-
-                var orderDto = _mapper.Map<OrderDto>(order);
-                return Result<OrderDto>.Success(orderDto);
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
             }
             catch (Exception ex)
             {

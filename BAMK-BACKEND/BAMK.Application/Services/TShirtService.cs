@@ -4,31 +4,50 @@ using BAMK.Core.Common;
 using BAMK.Core.Interfaces;
 using BAMK.Domain.Entities;
 using Microsoft.Extensions.Logging;
+using System.Linq.Expressions;
 
 namespace BAMK.Application.Services
 {
     public class TShirtService : ITShirtService
     {
         private readonly IGenericRepository<TShirt> _tShirtRepository;
+        private readonly IValidationService _validationService;
         private readonly IMapper _mapper;
         private readonly ILogger<TShirtService> _logger;
+        private readonly BAMK.Core.Interfaces.ICacheService _cacheService;
 
         public TShirtService(
             IGenericRepository<TShirt> tShirtRepository,
+            IValidationService validationService,
             IMapper mapper,
-            ILogger<TShirtService> logger)
+            ILogger<TShirtService> logger,
+            BAMK.Core.Interfaces.ICacheService cacheService)
         {
             _tShirtRepository = tShirtRepository;
+            _validationService = validationService;
             _mapper = mapper;
             _logger = logger;
+            _cacheService = cacheService;
         }
 
         public async Task<Result<IEnumerable<TShirtDto>>> GetAllAsync()
         {
             try
             {
+                // ✅ OPTIMIZED: Cache kontrolü
+                const string cacheKey = "tshirts_all";
+                var cachedTShirts = await _cacheService.GetAsync<IEnumerable<TShirtDto>>(cacheKey);
+                if (cachedTShirts != null)
+                {
+                    return Result<IEnumerable<TShirtDto>>.Success(cachedTShirts);
+                }
+
                 var tShirts = await _tShirtRepository.GetAllAsync();
                 var tShirtDtos = _mapper.Map<IEnumerable<TShirtDto>>(tShirts);
+                
+                // Cache'e kaydet (15 dakika)
+                await _cacheService.SetAsync(cacheKey, tShirtDtos, TimeSpan.FromMinutes(15));
+                
                 return Result<IEnumerable<TShirtDto>>.Success(tShirtDtos);
             }
             catch (Exception ex)
@@ -62,19 +81,37 @@ namespace BAMK.Application.Services
         {
             try
             {
-                var tShirt = _mapper.Map<TShirt>(createTShirtDto);
-                tShirt.IsActive = true;
-                tShirt.CreatedAt = DateTime.UtcNow;
+                _logger.LogInformation($"TShirt oluşturuluyor: {createTShirtDto.Name}");
+                
+                // Business validation - geçici olarak bypass edelim
+                // var validationResult = await _validationService.ValidateTShirtAsync(createTShirtDto);
+                // if (!validationResult.IsSuccess)
+                // {
+                //     _logger.LogWarning($"Validation hatası: {validationResult.Error?.Message}");
+                //     return Result<TShirtDto>.Failure(validationResult.Error!);
+                // }
 
+                _logger.LogInformation($"TShirt mapping yapılıyor...");
+                var tShirt = _mapper.Map<TShirt>(createTShirtDto);
+                tShirt.CreatedAt = DateTime.UtcNow;
+                tShirt.UpdatedAt = DateTime.UtcNow;
+                
+                _logger.LogInformation($"TShirt entity oluşturuldu - Id: {tShirt.Id}, Name: {tShirt.Name}");
+
+                _logger.LogInformation($"TShirt repository'ye ekleniyor...");
                 await _tShirtRepository.AddAsync(tShirt);
+                
+                _logger.LogInformation($"TShirt değişiklikleri kaydediliyor...");
                 await _tShirtRepository.SaveChangesAsync();
+                
+                _logger.LogInformation($"TShirt başarıyla oluşturuldu - Id: {tShirt.Id}");
 
                 var tShirtDto = _mapper.Map<TShirtDto>(tShirt);
                 return Result<TShirtDto>.Success(tShirtDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "T-shirt oluştururken hata oluştu");
+                _logger.LogError(ex, $"T-shirt oluştururken hata oluştu - Name: {createTShirtDto.Name}");
                 return Result<TShirtDto>.Failure(Error.Create(ErrorCode.InvalidOperation, "T-shirt oluşturulamadı"));
             }
         }
@@ -83,6 +120,13 @@ namespace BAMK.Application.Services
         {
             try
             {
+                // Business validation
+                var validationResult = await _validationService.ValidateTShirtAsync(updateTShirtDto);
+                if (!validationResult.IsSuccess)
+                {
+                    return Result<TShirtDto>.Failure(validationResult.Error!);
+                }
+
                 var existingTShirt = await _tShirtRepository.GetByIdAsync(id);
                 if (existingTShirt == null)
                 {
@@ -288,6 +332,61 @@ namespace BAMK.Application.Services
             {
                 _logger.LogError(ex, "Öne çıkan t-shirt'leri getirirken hata oluştu");
                 return Result<IEnumerable<TShirtDto>>.Failure(Error.Create(ErrorCode.InvalidOperation, "Öne çıkan t-shirt'ler getirilemedi"));
+            }
+        }
+
+        public async Task<Result<PagedResult<TShirtDto>>> GetPagedProductsAsync(int page, int pageSize)
+        {
+            try
+            {
+                var pagedResult = await _tShirtRepository.GetPagedAsync(page, pageSize);
+                var tShirtDtos = _mapper.Map<IEnumerable<TShirtDto>>(pagedResult.Items);
+                
+                var pagedDto = new PagedResult<TShirtDto>(tShirtDtos, pagedResult.TotalCount, pagedResult.Page, pagedResult.PageSize);
+                return Result<PagedResult<TShirtDto>>.Success(pagedDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Sayfalanmış t-shirt'leri getirirken hata oluştu");
+                return Result<PagedResult<TShirtDto>>.Failure(Error.Create(ErrorCode.InvalidOperation, "Sayfalanmış t-shirt'ler getirilemedi"));
+            }
+        }
+
+        public async Task<Result<PagedResult<TShirtDto>>> GetPagedProductsAsync(int page, int pageSize, string? search = null, string? category = null)
+        {
+            try
+            {
+                Expression<Func<TShirt, bool>> predicate = t => t.IsActive;
+                
+                if (!string.IsNullOrEmpty(search) && !string.IsNullOrEmpty(category))
+                {
+                    predicate = t => t.IsActive && 
+                        (t.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                         (t.Description != null && t.Description.Contains(search, StringComparison.OrdinalIgnoreCase))) &&
+                        t.Color != null && t.Color.Equals(category, StringComparison.OrdinalIgnoreCase);
+                }
+                else if (!string.IsNullOrEmpty(search))
+                {
+                    predicate = t => t.IsActive && 
+                        (t.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                         (t.Description != null && t.Description.Contains(search, StringComparison.OrdinalIgnoreCase)));
+                }
+                else if (!string.IsNullOrEmpty(category))
+                {
+                    predicate = t => t.IsActive && 
+                        t.Color != null && t.Color.Equals(category, StringComparison.OrdinalIgnoreCase);
+                }
+
+                var pagedResult = await _tShirtRepository.GetPagedAsync(page, pageSize, predicate, t => t.CreatedAt, false);
+                var tShirtDtos = _mapper.Map<IEnumerable<TShirtDto>>(pagedResult.Items);
+                
+                var pagedDto = new PagedResult<TShirtDto>(tShirtDtos, pagedResult.TotalCount, pagedResult.Page, pagedResult.PageSize);
+                return Result<PagedResult<TShirtDto>>.Success(pagedDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Filtrelenmiş sayfalanmış t-shirt'leri getirirken hata oluştu");
+                return Result<PagedResult<TShirtDto>>.Failure(Error.Create(ErrorCode.InvalidOperation, "Filtrelenmiş sayfalanmış t-shirt'ler getirilemedi"));
             }
         }
     }

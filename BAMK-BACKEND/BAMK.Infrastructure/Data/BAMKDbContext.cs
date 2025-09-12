@@ -16,6 +16,8 @@ namespace BAMK.Infrastructure.Data
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<Answer> Answers { get; set; }
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -120,6 +122,39 @@ namespace BAMK.Infrastructure.Data
                 entity.HasOne(e => e.User)
                     .WithMany(u => u.Answers)
                     .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Cart configuration
+            modelBuilder.Entity<Cart>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.TotalAmount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.LastUpdated).IsRequired();
+                
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // CartItem configuration
+            modelBuilder.Entity<CartItem>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Quantity).IsRequired();
+                entity.Property(e => e.UnitPrice).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.TotalPrice).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.AddedAt).IsRequired();
+                
+                entity.HasOne(e => e.Cart)
+                    .WithMany(c => c.CartItems)
+                    .HasForeignKey(e => e.CartId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(e => e.TShirt)
+                    .WithMany()
+                    .HasForeignKey(e => e.TShirtId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }

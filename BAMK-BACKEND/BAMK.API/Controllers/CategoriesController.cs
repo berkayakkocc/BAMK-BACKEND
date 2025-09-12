@@ -7,12 +7,10 @@ namespace BAMK.API.Controllers
     public class CategoriesController : BaseController
     {
         private readonly ITShirtService _tShirtService;
-        private readonly ILogger<CategoriesController> _logger;
 
-        public CategoriesController(ITShirtService tShirtService, ILogger<CategoriesController> logger)
+        public CategoriesController(ITShirtService tShirtService, ILogger<CategoriesController> logger) : base(logger)
         {
             _tShirtService = tShirtService;
-            _logger = logger;
         }
 
         /// <summary>

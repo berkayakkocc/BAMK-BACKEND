@@ -1,5 +1,4 @@
 using BAMK.Core.Interfaces;
-using BAMK.Domain.Interfaces;
 using BAMK.Infrastructure.Data;
 using BAMK.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;

@@ -8,8 +8,9 @@ namespace BAMK.Core.Common
         ValidationError = 2,
         Unauthorized = 3,
         Forbidden = 4,
-        InvalidOperation = 5,
-        InternalServerError = 6,
+        Conflict = 5,
+        InvalidOperation = 6,
+        InternalServerError = 7,
         
         // Network errors
         NetworkError = 100,

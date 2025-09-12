@@ -8,15 +8,13 @@ namespace BAMK.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class TShirtController : ControllerBase
+    public class TShirtController : BaseController
     {
         private readonly ITShirtService _tShirtService;
-        private readonly ILogger<TShirtController> _logger;
 
-        public TShirtController(ITShirtService tShirtService, ILogger<TShirtController> logger)
+        public TShirtController(ITShirtService tShirtService, ILogger<TShirtController> logger) : base(logger)
         {
             _tShirtService = tShirtService;
-            _logger = logger;
         }
 
         /// <summary>
