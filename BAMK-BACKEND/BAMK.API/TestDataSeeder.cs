@@ -491,36 +491,15 @@ namespace BAMK.API
                 Console.WriteLine("📋 ProductDetail verileri kontrol ediliyor...");
                 
                 // TShirt'leri al
-                Console.WriteLine("🔍 TShirt'ler alınıyor...");
                 var tShirts = await _tShirtService.GetAllAsync();
-                Console.WriteLine($"TShirt service sonucu: IsSuccess={tShirts.IsSuccess}");
-                
-                if (!tShirts.IsSuccess)
+                if (!tShirts.IsSuccess || tShirts.Value == null || !tShirts.Value.Any())
                 {
-                    Console.WriteLine($"❌ TShirt service hatası: {tShirts.Error?.Message}");
-                    return false;
-                }
-                
-                if (tShirts.Value == null)
-                {
-                    Console.WriteLine("❌ TShirt Value null");
-                    return false;
-                }
-                
-                if (!tShirts.Value.Any())
-                {
-                    Console.WriteLine("❌ TShirt listesi boş");
+                    Console.WriteLine("❌ TShirt bulunamadı");
                     return false;
                 }
 
                 var tShirtList = tShirts.Value.ToList();
                 Console.WriteLine($"✅ {tShirtList.Count} TShirt bulundu");
-                
-                // TShirt detaylarını yazdır
-                foreach (var tshirt in tShirtList)
-                {
-                    Console.WriteLine($"   TShirt: ID={tshirt.Id}, Name={tshirt.Name}");
-                }
 
                 // Mevcut ProductDetail'leri kontrol et
                 var existingProductDetails = await _productDetailService.GetAllAsync();
@@ -562,37 +541,24 @@ namespace BAMK.API
                 }
 
                 var createdCount = 0;
-                Console.WriteLine($"📝 {productDetails.Count} ProductDetail oluşturulmaya çalışılıyor...");
-                
                 foreach (var productDetail in productDetails)
                 {
                     try
                     {
-                        Console.WriteLine($"🔄 ProductDetail oluşturuluyor: TShirt ID {productDetail.TShirtId}");
-                        Console.WriteLine($"   Material: {productDetail.Material}");
-                        Console.WriteLine($"   Brand: {productDetail.Brand}");
-                        
                         var result = await _productDetailService.CreateAsync(productDetail);
-                        Console.WriteLine($"Service sonucu: IsSuccess={result.IsSuccess}");
-                        
                         if (result.IsSuccess)
                         {
-                            Console.WriteLine($"✅ ProductDetail oluşturuldu: TShirt ID {productDetail.TShirtId} (ID: {result.Value?.Id})");
+                            Console.WriteLine($"✅ ProductDetail oluşturuldu: TShirt ID {productDetail.TShirtId}");
                             createdCount++;
                         }
                         else
                         {
-                            Console.WriteLine($"❌ ProductDetail oluşturulamadı: TShirt ID {productDetail.TShirtId}");
-                            Console.WriteLine($"   Hata: {result.Error?.Message}");
-                            Console.WriteLine($"   Hata Kodu: {result.Error?.Code}");
-                            Console.WriteLine($"   Hata Detayı: {result.Error?.ToString()}");
+                            Console.WriteLine($"❌ ProductDetail oluşturulamadı: TShirt ID {productDetail.TShirtId} - {result.Error?.Message}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"❌ ProductDetail oluşturma hatası: TShirt ID {productDetail.TShirtId}");
-                        Console.WriteLine($"   Exception: {ex.Message}");
-                        Console.WriteLine($"   Stack Trace: {ex.StackTrace}");
+                        Console.WriteLine($"❌ ProductDetail oluşturma hatası: TShirt ID {productDetail.TShirtId} - {ex.Message}");
                     }
                 }
 
@@ -835,40 +801,26 @@ namespace BAMK.API
                     
                     try
                     {
-                        Console.WriteLine($"🛒 Cart oluşturuluyor: {user.FirstName} {user.LastName} (ID: {user.Id})");
-                        
                         // Cart'ı kontrol et
                         var cartResult = await _cartService.GetCartAsync(user.Id);
-                        Console.WriteLine($"Cart service sonucu: IsSuccess={cartResult.IsSuccess}");
-                        
                         if (!cartResult.IsSuccess)
                         {
                             Console.WriteLine($"❌ Cart alınamadı: {user.FirstName} {user.LastName} - {cartResult.Error?.Message}");
-                            Console.WriteLine($"   Hata Kodu: {cartResult.Error?.Code}");
-                            Console.WriteLine($"   Hata Detayı: {cartResult.Error?.ToString()}");
-                            continue; // Bu kullanıcıyı atla
+                            continue;
                         }
-                        else
+                        
+                        // Eğer cart'ta ürün varsa atla
+                        if (cartResult.Value?.CartItems?.Any() == true)
                         {
-                            Console.WriteLine($"✅ Cart alındı: {user.FirstName} {user.LastName}");
-                            Console.WriteLine($"   Cart ID: {cartResult.Value?.Id}");
-                            Console.WriteLine($"   Cart Items: {cartResult.Value?.CartItems?.Count ?? 0}");
-                            
-                            // Eğer cart'ta ürün varsa atla
-                            if (cartResult.Value?.CartItems?.Any() == true)
-                            {
-                                Console.WriteLine($"ℹ️ Cart zaten dolu: {user.FirstName} {user.LastName} ({cartResult.Value.CartItems.Count} ürün)");
-                                cartCreatedCount++;
-                                continue;
-                            }
+                            Console.WriteLine($"ℹ️ Cart zaten dolu: {user.FirstName} {user.LastName} ({cartResult.Value.CartItems.Count} ürün)");
+                            cartCreatedCount++;
+                            continue;
                         }
 
                         // Rastgele ürünleri sepete ekle
                         var random = new Random();
                         var cartItemCount = random.Next(1, Math.Min(3, tShirtList.Count + 1));
                         var addedItems = 0;
-
-                        Console.WriteLine($"📦 {cartItemCount} ürün sepete ekleniyor...");
 
                         for (int j = 0; j < cartItemCount; j++)
                         {
@@ -880,20 +832,11 @@ namespace BAMK.API
                                 TShirtId = randomTShirt.Id,
                                 Quantity = quantity
                             };
-
-                            Console.WriteLine($"   Ürün ekleniyor: {randomTShirt.Name} (ID: {randomTShirt.Id}, Miktar: {quantity})");
                             
                             var addResult = await _cartService.AddToCartAsync(user.Id, addToCartDto);
-                            Console.WriteLine($"   AddToCart sonucu: IsSuccess={addResult.IsSuccess}");
-                            
                             if (addResult.IsSuccess)
                             {
                                 addedItems++;
-                                Console.WriteLine($"   ✅ Ürün eklendi");
-                            }
-                            else
-                            {
-                                Console.WriteLine($"   ❌ Ürün eklenemedi: {addResult.Error?.Message}");
                             }
                         }
 
@@ -901,10 +844,6 @@ namespace BAMK.API
                         {
                             Console.WriteLine($"✅ Cart oluşturuldu: {user.FirstName} {user.LastName} ({addedItems} ürün)");
                             cartCreatedCount++;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"⚠️ Cart oluşturulamadı: {user.FirstName} {user.LastName} (hiç ürün eklenemedi)");
                         }
                     }
                     catch (Exception ex)
@@ -992,18 +931,14 @@ namespace BAMK.API
                 }
 
                 var createdCount = 0;
-                Console.WriteLine($"📝 {answers.Count} cevap oluşturulmaya çalışılıyor...");
-                
                 foreach (var answer in answers)
                 {
                     try
                     {
-                        Console.WriteLine($"🔄 Cevap oluşturuluyor: Soru ID {answer.QuestionId}, Kullanıcı ID {answer.UserId}");
-                        
                         var result = await _questionService.CreateAnswerAsync(answer);
                         if (result.IsSuccess)
                         {
-                            Console.WriteLine($"✅ Cevap oluşturuldu: ID {result.Value?.Id}");
+                            Console.WriteLine($"✅ Cevap oluşturuldu: Soru ID {answer.QuestionId}");
                             createdCount++;
                         }
                         else
