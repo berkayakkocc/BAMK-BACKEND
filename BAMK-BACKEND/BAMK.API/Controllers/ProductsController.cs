@@ -1,5 +1,6 @@
 using BAMK.Application.DTOs.TShirt;
 using BAMK.Application.Services;
+using BAMK.API.Services;
 using BAMK.Core.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,11 +10,16 @@ namespace BAMK.API.Controllers
     public class ProductsController : BaseController
     {
         private readonly ITShirtService _tShirtService;
+        private readonly IProductMappingService _productMappingService;
         private readonly ILogger<ProductsController> _logger;
 
-        public ProductsController(ITShirtService tShirtService, ILogger<ProductsController> logger)
+        public ProductsController(
+            ITShirtService tShirtService, 
+            IProductMappingService productMappingService,
+            ILogger<ProductsController> logger)
         {
             _tShirtService = tShirtService;
+            _productMappingService = productMappingService;
             _logger = logger;
         }
 
@@ -25,58 +31,21 @@ namespace BAMK.API.Controllers
         {
             try
             {
-                var result = await _tShirtService.GetAllAsync();
+                var result = await _tShirtService.GetPagedAsync(page, limit, search, category);
                 if (!result.IsSuccess)
                 {
                     return ErrorResponse("Ürünler getirilirken hata oluştu", 400);
                 }
 
-                var products = result.Value.ToList();
-                
-                // Search filter
-                if (!string.IsNullOrEmpty(search))
+                // Get total count for pagination
+                var totalResult = await _tShirtService.GetAllAsync();
+                if (!totalResult.IsSuccess)
                 {
-                    products = products.Where(p => 
-                        p.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                        (p.Description?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
-                    ).ToList();
+                    return ErrorResponse("Ürünler getirilirken hata oluştu", 400);
                 }
 
-                // Category filter (color as category for now)
-                if (!string.IsNullOrEmpty(category))
-                {
-                    products = products.Where(p => 
-                        p.Color?.Equals(category, StringComparison.OrdinalIgnoreCase) ?? false
-                    ).ToList();
-                }
-
-                // Pagination
-                var total = products.Count;
-                var paginatedProducts = products
-                    .Skip((page - 1) * limit)
-                    .Take(limit)
-                    .Select(p => new
-                    {
-                        id = p.Id.ToString(),
-                        name = p.Name,
-                        description = p.Description,
-                        price = p.Price,
-                        originalPrice = p.Price * 1.2m, // %20 indirim simülasyonu
-                        images = !string.IsNullOrEmpty(p.ImageUrl) ? new[] { p.ImageUrl } : new[] { "https://via.placeholder.com/300x300?text=No+Image" },
-                        category = new
-                        {
-                            id = p.Color ?? "default",
-                            name = p.Color ?? "Genel",
-                            slug = (p.Color ?? "genel").ToLower().Replace(" ", "-")
-                        },
-                        stock = p.StockQuantity,
-                        isActive = p.IsActive,
-                        tags = new[] { p.Color ?? "genel", p.Size ?? "standart" },
-                        createdAt = p.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                        updatedAt = p.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-                    });
-
-                return PaginatedResponse(paginatedProducts, page, limit, total, "Ürünler başarıyla getirildi");
+                var total = totalResult.Value.Count();
+                return Ok(_productMappingService.MapToFrontendFormatWithPagination(result.Value, page, limit, total));
             }
             catch (Exception ex)
             {
@@ -104,26 +73,7 @@ namespace BAMK.API.Controllers
                 }
 
                 var product = result.Value;
-                var productData = new
-                {
-                    id = product.Id.ToString(),
-                    name = product.Name,
-                    description = product.Description,
-                    price = product.Price,
-                    originalPrice = product.Price * 1.2m,
-                    images = !string.IsNullOrEmpty(product.ImageUrl) ? new[] { product.ImageUrl } : new[] { "https://via.placeholder.com/300x300?text=No+Image" },
-                    category = new
-                    {
-                        id = product.Color ?? "default",
-                        name = product.Color ?? "Genel",
-                        slug = (product.Color ?? "genel").ToLower().Replace(" ", "-")
-                    },
-                    stock = product.StockQuantity,
-                    isActive = product.IsActive,
-                    tags = new[] { product.Color ?? "genel", product.Size ?? "standart" },
-                    createdAt = product.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                    updatedAt = product.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-                };
+                var productData = _productMappingService.MapToFrontendFormat(product);
 
                 return SuccessResponse(productData, "Ürün başarıyla getirildi");
             }
@@ -142,36 +92,14 @@ namespace BAMK.API.Controllers
         {
             try
             {
-                var result = await _tShirtService.GetActiveAsync();
+                var result = await _tShirtService.GetFeaturedAsync(limit);
                 if (!result.IsSuccess)
                 {
                     return ErrorResponse("Öne çıkan ürünler getirilirken hata oluştu", 400);
                 }
 
-                var featuredProducts = result.Value
-                    .Take(limit)
-                    .Select(p => new
-                    {
-                        id = p.Id.ToString(),
-                        name = p.Name,
-                        description = p.Description,
-                        price = p.Price,
-                        originalPrice = p.Price * 1.2m,
-                        images = !string.IsNullOrEmpty(p.ImageUrl) ? new[] { p.ImageUrl } : new[] { "https://via.placeholder.com/300x300?text=No+Image" },
-                        category = new
-                        {
-                            id = p.Color ?? "default",
-                            name = p.Color ?? "Genel",
-                            slug = (p.Color ?? "genel").ToLower().Replace(" ", "-")
-                        },
-                        stock = p.StockQuantity,
-                        isActive = p.IsActive,
-                        tags = new[] { p.Color ?? "genel", p.Size ?? "standart" },
-                        createdAt = p.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                        updatedAt = p.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-                    });
-
-                return SuccessResponse(featuredProducts, "Öne çıkan ürünler başarıyla getirildi");
+                var mappedProducts = _productMappingService.MapToFrontendFormat(result.Value);
+                return SuccessResponse(mappedProducts, "Öne çıkan ürünler başarıyla getirildi");
             }
             catch (Exception ex)
             {
@@ -188,46 +116,19 @@ namespace BAMK.API.Controllers
         {
             try
             {
-                var result = await _tShirtService.GetAllAsync();
+                var result = await _tShirtService.SearchAsync(q);
                 if (!result.IsSuccess)
                 {
                     return ErrorResponse("Arama yapılırken hata oluştu", 400);
                 }
 
-                var products = result.Value
-                    .Where(p => 
-                        p.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                        (p.Description?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (p.Color?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
-                    )
-                    .ToList();
-
+                var products = result.Value.ToList();
                 var total = products.Count;
                 var paginatedProducts = products
                     .Skip((page - 1) * limit)
-                    .Take(limit)
-                    .Select(p => new
-                    {
-                        id = p.Id.ToString(),
-                        name = p.Name,
-                        description = p.Description,
-                        price = p.Price,
-                        originalPrice = p.Price * 1.2m,
-                        images = !string.IsNullOrEmpty(p.ImageUrl) ? new[] { p.ImageUrl } : new[] { "https://via.placeholder.com/300x300?text=No+Image" },
-                        category = new
-                        {
-                            id = p.Color ?? "default",
-                            name = p.Color ?? "Genel",
-                            slug = (p.Color ?? "genel").ToLower().Replace(" ", "-")
-                        },
-                        stock = p.StockQuantity,
-                        isActive = p.IsActive,
-                        tags = new[] { p.Color ?? "genel", p.Size ?? "standart" },
-                        createdAt = p.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                        updatedAt = p.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-                    });
+                    .Take(limit);
 
-                return PaginatedResponse(paginatedProducts, page, limit, total, "Arama sonuçları başarıyla getirildi");
+                return Ok(_productMappingService.MapToFrontendFormatWithPagination(paginatedProducts, page, limit, total));
             }
             catch (Exception ex)
             {

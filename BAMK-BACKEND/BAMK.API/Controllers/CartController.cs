@@ -1,19 +1,18 @@
-using BAMK.Application.DTOs.TShirt;
-using BAMK.Application.Services;
+using BAMK.API.Services;
+using BAMK.Core.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 
 namespace BAMK.API.Controllers
 {
     public class CartController : BaseController
     {
-        private readonly ITShirtService _tShirtService;
+        private readonly ICartService _cartService;
         private readonly ILogger<CartController> _logger;
 
-        public CartController(ITShirtService tShirtService, ILogger<CartController> logger)
+        public CartController(ICartService cartService, ILogger<CartController> logger)
         {
-            _tShirtService = tShirtService;
+            _cartService = cartService;
             _logger = logger;
         }
 
@@ -22,14 +21,17 @@ namespace BAMK.API.Controllers
         /// </summary>
         [HttpGet]
         [Authorize]
-        public IActionResult GetCart()
+        public async Task<IActionResult> GetCart()
         {
             try
             {
-                // Şimdilik boş sepet döndür, gerçek implementasyon için veritabanı gerekli
-                var cartItems = new List<object>();
-                
-                return SuccessResponse(cartItems, "Sepet başarıyla getirildi");
+                var result = await _cartService.GetCartAsync();
+                if (!result.IsSuccess)
+                {
+                    return ErrorResponse("Sepet getirilirken hata oluştu", 400);
+                }
+
+                return SuccessResponse(result.Value, "Sepet başarıyla getirildi");
             }
             catch (Exception ex)
             {
@@ -47,36 +49,17 @@ namespace BAMK.API.Controllers
         {
             try
             {
-                // Ürünün varlığını kontrol et
-                var productResult = await _tShirtService.GetByIdAsync(int.Parse(request.ProductId));
-                if (!productResult.IsSuccess)
+                var result = await _cartService.AddToCartAsync(request.ProductId, request.Quantity);
+                if (!result.IsSuccess)
                 {
-                    return ErrorResponse("Ürün bulunamadı", 404);
-                }
-
-                var product = productResult.Value;
-                if (product.StockQuantity < request.Quantity)
-                {
-                    return ErrorResponse("Yeterli stok bulunmuyor", 400);
-                }
-
-                // Şimdilik başarılı response döndür
-                var cartItem = new
-                {
-                    id = Guid.NewGuid().ToString(),
-                    product = new
+                    if (result.Error?.Code == ErrorCode.NotFound)
                     {
-                        id = product.Id.ToString(),
-                        name = product.Name,
-                        description = product.Description,
-                        price = product.Price,
-                        images = !string.IsNullOrEmpty(product.ImageUrl) ? new[] { product.ImageUrl } : new[] { "https://via.placeholder.com/300x300?text=No+Image" }
-                    },
-                    quantity = request.Quantity,
-                    addedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-                };
+                        return ErrorResponse("Ürün bulunamadı", 404);
+                    }
+                    return ErrorResponse(result.Error?.Message ?? "Ürün sepete eklenirken hata oluştu", 400);
+                }
 
-                return SuccessResponse(cartItem, "Ürün sepete eklendi");
+                return SuccessResponse(result.Value, "Ürün sepete eklendi");
             }
             catch (Exception ex)
             {
@@ -90,19 +73,17 @@ namespace BAMK.API.Controllers
         /// </summary>
         [HttpGet("summary")]
         [Authorize]
-        public IActionResult GetCartSummary()
+        public async Task<IActionResult> GetCartSummary()
         {
             try
             {
-                // Şimdilik boş sepet özeti döndür
-                var summary = new
+                var result = await _cartService.GetCartSummaryAsync();
+                if (!result.IsSuccess)
                 {
-                    totalItems = 0,
-                    totalPrice = 0,
-                    items = new List<object>()
-                };
+                    return ErrorResponse("Sepet özeti getirilirken hata oluştu", 400);
+                }
 
-                return SuccessResponse(summary, "Sepet özeti başarıyla getirildi");
+                return SuccessResponse(result.Value, "Sepet özeti başarıyla getirildi");
             }
             catch (Exception ex)
             {
@@ -116,10 +97,16 @@ namespace BAMK.API.Controllers
         /// </summary>
         [HttpDelete]
         [Authorize]
-        public IActionResult ClearCart()
+        public async Task<IActionResult> ClearCart()
         {
             try
             {
+                var result = await _cartService.ClearCartAsync();
+                if (!result.IsSuccess)
+                {
+                    return ErrorResponse("Sepet temizlenirken hata oluştu", 400);
+                }
+
                 return SuccessResponse("Sepet başarıyla temizlendi");
             }
             catch (Exception ex)

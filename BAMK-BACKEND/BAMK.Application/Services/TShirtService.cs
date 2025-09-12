@@ -196,5 +196,99 @@ namespace BAMK.Application.Services
                 return Result<bool>.Failure(Error.Create(ErrorCode.InvalidOperation, "Stok güncellenemedi"));
             }
         }
+
+        public async Task<Result<IEnumerable<TShirtDto>>> SearchAsync(string searchTerm)
+        {
+            try
+            {
+                var tShirts = await _tShirtRepository.FindAsync(t => 
+                    t.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (t.Description != null && t.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                    (t.Color != null && t.Color.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                );
+                
+                var tShirtDtos = _mapper.Map<IEnumerable<TShirtDto>>(tShirts);
+                return Result<IEnumerable<TShirtDto>>.Success(tShirtDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "T-shirt arama sırasında hata oluştu. Arama terimi: {SearchTerm}", searchTerm);
+                return Result<IEnumerable<TShirtDto>>.Failure(Error.Create(ErrorCode.InvalidOperation, "Arama yapılamadı"));
+            }
+        }
+
+        public async Task<Result<IEnumerable<TShirtDto>>> GetByCategoryAsync(string category)
+        {
+            try
+            {
+                var tShirts = await _tShirtRepository.FindAsync(t => 
+                    t.Color != null && t.Color.Equals(category, StringComparison.OrdinalIgnoreCase) && t.IsActive
+                );
+                
+                var tShirtDtos = _mapper.Map<IEnumerable<TShirtDto>>(tShirts);
+                return Result<IEnumerable<TShirtDto>>.Success(tShirtDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Kategori bazlı t-shirt'leri getirirken hata oluştu. Kategori: {Category}", category);
+                return Result<IEnumerable<TShirtDto>>.Failure(Error.Create(ErrorCode.InvalidOperation, "Kategori bazlı t-shirt'ler getirilemedi"));
+            }
+        }
+
+        public async Task<Result<IEnumerable<TShirtDto>>> GetPagedAsync(int page, int limit, string? search = null, string? category = null)
+        {
+            try
+            {
+                var allTShirts = await _tShirtRepository.GetAllAsync();
+                var products = allTShirts.ToList();
+                
+                // Apply search filter
+                if (!string.IsNullOrEmpty(search))
+                {
+                    products = products.Where(p => 
+                        p.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                        (p.Description != null && p.Description.Contains(search, StringComparison.OrdinalIgnoreCase))
+                    ).ToList();
+                }
+
+                // Apply category filter
+                if (!string.IsNullOrEmpty(category))
+                {
+                    products = products.Where(p => 
+                        p.Color != null && p.Color.Equals(category, StringComparison.OrdinalIgnoreCase)
+                    ).ToList();
+                }
+
+                // Apply pagination
+                var paginatedProducts = products
+                    .Skip((page - 1) * limit)
+                    .Take(limit);
+
+                var tShirtDtos = _mapper.Map<IEnumerable<TShirtDto>>(paginatedProducts);
+                return Result<IEnumerable<TShirtDto>>.Success(tShirtDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Sayfalanmış t-shirt'leri getirirken hata oluştu");
+                return Result<IEnumerable<TShirtDto>>.Failure(Error.Create(ErrorCode.InvalidOperation, "Sayfalanmış t-shirt'ler getirilemedi"));
+            }
+        }
+
+        public async Task<Result<IEnumerable<TShirtDto>>> GetFeaturedAsync(int limit = 8)
+        {
+            try
+            {
+                var tShirts = await _tShirtRepository.FindAsync(t => t.IsActive);
+                var featuredTShirts = tShirts.Take(limit);
+                
+                var tShirtDtos = _mapper.Map<IEnumerable<TShirtDto>>(featuredTShirts);
+                return Result<IEnumerable<TShirtDto>>.Success(tShirtDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Öne çıkan t-shirt'leri getirirken hata oluştu");
+                return Result<IEnumerable<TShirtDto>>.Failure(Error.Create(ErrorCode.InvalidOperation, "Öne çıkan t-shirt'ler getirilemedi"));
+            }
+        }
     }
 }

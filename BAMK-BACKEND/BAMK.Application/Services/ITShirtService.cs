@@ -14,5 +14,11 @@ namespace BAMK.Application.Services
         Task<Result<IEnumerable<TShirtDto>>> GetByColorAsync(string color);
         Task<Result<IEnumerable<TShirtDto>>> GetBySizeAsync(string size);
         Task<Result<bool>> UpdateStockAsync(int id, int quantity);
+        
+        // New business logic methods
+        Task<Result<IEnumerable<TShirtDto>>> SearchAsync(string searchTerm);
+        Task<Result<IEnumerable<TShirtDto>>> GetByCategoryAsync(string category);
+        Task<Result<IEnumerable<TShirtDto>>> GetPagedAsync(int page, int limit, string? search = null, string? category = null);
+        Task<Result<IEnumerable<TShirtDto>>> GetFeaturedAsync(int limit = 8);
     }
 }

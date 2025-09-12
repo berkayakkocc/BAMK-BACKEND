@@ -1,5 +1,6 @@
 using BAMK.API;
 using BAMK.API.Configuration;
+using BAMK.API.Middleware;
 using BAMK.API.Services;
 using BAMK.Application.Services;
 using BAMK.Infrastructure.Data;
@@ -40,6 +41,10 @@ builder.Services.AddScoped<IQuestionService, QuestionService>();
 // Add JWT Services
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Add API Services
+builder.Services.AddScoped<IProductMappingService, ProductMappingService>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 // Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
@@ -123,6 +128,7 @@ app.MapGet("/", () => Results.Redirect("/swagger/index.html"));
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");           // ❗ CORS middleware burada
+app.UseMiddleware<GlobalExceptionMiddleware>(); // Global exception handling
 app.UseAuthentication();
 app.UseAuthorization();
 

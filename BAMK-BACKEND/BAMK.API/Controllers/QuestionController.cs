@@ -10,7 +10,7 @@ namespace BAMK.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class QuestionController : ControllerBase
+public class QuestionController : BaseController
 {
     private readonly IQuestionService _questionService;
     private readonly IMapper _mapper;
@@ -32,13 +32,21 @@ public class QuestionController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var result = await _questionService.GetAllAsync();
-        if (!result.IsSuccess)
+        try
         {
-            return BadRequest(result.Error);
-        }
+            var result = await _questionService.GetAllAsync();
+            if (!result.IsSuccess)
+            {
+                return ErrorResponse("Sorular getirilirken hata oluştu", 400, result.Error);
+            }
 
-        return Ok(result.Value);
+            return SuccessResponse(result.Value, "Sorular başarıyla getirildi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Sorular getirilirken hata oluştu");
+            return ErrorResponse("Sorular getirilirken hata oluştu", 500);
+        }
     }
 
     /// <summary>
@@ -47,17 +55,25 @@ public class QuestionController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var result = await _questionService.GetByIdAsync(id);
-        if (!result.IsSuccess)
+        try
         {
-            if (result.Error?.Code == ErrorCode.NotFound)
+            var result = await _questionService.GetByIdAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound(result.Error);
+                if (result.Error?.Code == ErrorCode.NotFound)
+                {
+                    return ErrorResponse("Soru bulunamadı", 404);
+                }
+                return ErrorResponse("Soru getirilirken hata oluştu", 400, result.Error);
             }
-            return BadRequest(result.Error);
-        }
 
-        return Ok(result.Value);
+            return SuccessResponse(result.Value, "Soru başarıyla getirildi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Soru getirilirken hata oluştu. ID: {Id}", id);
+            return ErrorResponse("Soru getirilirken hata oluştu", 500);
+        }
     }
 
     /// <summary>
@@ -66,13 +82,21 @@ public class QuestionController : ControllerBase
     [HttpGet("user/{userId}")]
     public async Task<IActionResult> GetByUserId(int userId)
     {
-        var result = await _questionService.GetByUserIdAsync(userId);
-        if (!result.IsSuccess)
+        try
         {
-            return BadRequest(result.Error);
-        }
+            var result = await _questionService.GetByUserIdAsync(userId);
+            if (!result.IsSuccess)
+            {
+                return ErrorResponse("Kullanıcı soruları getirilirken hata oluştu", 400, result.Error);
+            }
 
-        return Ok(result.Value);
+            return SuccessResponse(result.Value, "Kullanıcı soruları başarıyla getirildi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Kullanıcı soruları getirilirken hata oluştu. UserId: {UserId}", userId);
+            return ErrorResponse("Kullanıcı soruları getirilirken hata oluştu", 500);
+        }
     }
 
     /// <summary>
@@ -81,18 +105,26 @@ public class QuestionController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateQuestionDto createQuestionDto)
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return BadRequest(ModelState);
-        }
+            if (!ModelState.IsValid)
+            {
+                return ErrorResponse("Geçersiz veri", 400, ModelState);
+            }
 
-        var result = await _questionService.CreateAsync(createQuestionDto);
-        if (!result.IsSuccess)
+            var result = await _questionService.CreateAsync(createQuestionDto);
+            if (!result.IsSuccess)
+            {
+                return ErrorResponse("Soru oluşturulurken hata oluştu", 400, result.Error);
+            }
+
+            return SuccessResponse(result.Value, "Soru başarıyla oluşturuldu");
+        }
+        catch (Exception ex)
         {
-            return BadRequest(result.Error);
+            _logger.LogError(ex, "Soru oluşturulurken hata oluştu");
+            return ErrorResponse("Soru oluşturulurken hata oluştu", 500);
         }
-
-        return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value);
     }
 
     /// <summary>
@@ -101,22 +133,30 @@ public class QuestionController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateQuestionDto updateQuestionDto)
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return BadRequest(ModelState);
-        }
-
-        var result = await _questionService.UpdateAsync(id, updateQuestionDto);
-        if (!result.IsSuccess)
-        {
-            if (result.Error?.Code == ErrorCode.NotFound)
+            if (!ModelState.IsValid)
             {
-                return NotFound(result.Error);
+                return ErrorResponse("Geçersiz veri", 400, ModelState);
             }
-            return BadRequest(result.Error);
-        }
 
-        return Ok(result.Value);
+            var result = await _questionService.UpdateAsync(id, updateQuestionDto);
+            if (!result.IsSuccess)
+            {
+                if (result.Error?.Code == ErrorCode.NotFound)
+                {
+                    return ErrorResponse("Soru bulunamadı", 404);
+                }
+                return ErrorResponse("Soru güncellenirken hata oluştu", 400, result.Error);
+            }
+
+            return SuccessResponse(result.Value, "Soru başarıyla güncellendi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Soru güncellenirken hata oluştu. ID: {Id}", id);
+            return ErrorResponse("Soru güncellenirken hata oluştu", 500);
+        }
     }
 
     /// <summary>
@@ -125,17 +165,25 @@ public class QuestionController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var result = await _questionService.DeleteAsync(id);
-        if (!result.IsSuccess)
+        try
         {
-            if (result.Error?.Code == ErrorCode.NotFound)
+            var result = await _questionService.DeleteAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound(result.Error);
+                if (result.Error?.Code == ErrorCode.NotFound)
+                {
+                    return ErrorResponse("Soru bulunamadı", 404);
+                }
+                return ErrorResponse("Soru silinirken hata oluştu", 400, result.Error);
             }
-            return BadRequest(result.Error);
-        }
 
-        return NoContent();
+            return SuccessResponse("Soru başarıyla silindi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Soru silinirken hata oluştu. ID: {Id}", id);
+            return ErrorResponse("Soru silinirken hata oluştu", 500);
+        }
     }
 
     /// <summary>
@@ -144,17 +192,25 @@ public class QuestionController : ControllerBase
     [HttpPut("{id}/activate")]
     public async Task<IActionResult> Activate(int id)
     {
-        var result = await _questionService.ActivateAsync(id);
-        if (!result.IsSuccess)
+        try
         {
-            if (result.Error?.Code == ErrorCode.NotFound)
+            var result = await _questionService.ActivateAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound(result.Error);
+                if (result.Error?.Code == ErrorCode.NotFound)
+                {
+                    return ErrorResponse("Soru bulunamadı", 404);
+                }
+                return ErrorResponse("Soru aktifleştirilirken hata oluştu", 400, result.Error);
             }
-            return BadRequest(result.Error);
-        }
 
-        return Ok(new { message = "Soru aktifleştirildi" });
+            return SuccessResponse("Soru başarıyla aktifleştirildi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Soru aktifleştirilirken hata oluştu. ID: {Id}", id);
+            return ErrorResponse("Soru aktifleştirilirken hata oluştu", 500);
+        }
     }
 
     /// <summary>
@@ -163,17 +219,25 @@ public class QuestionController : ControllerBase
     [HttpPut("{id}/deactivate")]
     public async Task<IActionResult> Deactivate(int id)
     {
-        var result = await _questionService.DeactivateAsync(id);
-        if (!result.IsSuccess)
+        try
         {
-            if (result.Error?.Code == ErrorCode.NotFound)
+            var result = await _questionService.DeactivateAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound(result.Error);
+                if (result.Error?.Code == ErrorCode.NotFound)
+                {
+                    return ErrorResponse("Soru bulunamadı", 404);
+                }
+                return ErrorResponse("Soru deaktifleştirilirken hata oluştu", 400, result.Error);
             }
-            return BadRequest(result.Error);
-        }
 
-        return Ok(new { message = "Soru deaktifleştirildi" });
+            return SuccessResponse("Soru başarıyla deaktifleştirildi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Soru deaktifleştirilirken hata oluştu. ID: {Id}", id);
+            return ErrorResponse("Soru deaktifleştirilirken hata oluştu", 500);
+        }
     }
 
     /// <summary>
@@ -182,19 +246,27 @@ public class QuestionController : ControllerBase
     [HttpPost("{questionId}/answers")]
     public async Task<IActionResult> CreateAnswer(int questionId, [FromBody] CreateAnswerDto createAnswerDto)
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return BadRequest(ModelState);
-        }
+            if (!ModelState.IsValid)
+            {
+                return ErrorResponse("Geçersiz veri", 400, ModelState);
+            }
 
-        createAnswerDto.QuestionId = questionId;
-        var result = await _questionService.CreateAnswerAsync(createAnswerDto);
-        if (!result.IsSuccess)
+            createAnswerDto.QuestionId = questionId;
+            var result = await _questionService.CreateAnswerAsync(createAnswerDto);
+            if (!result.IsSuccess)
+            {
+                return ErrorResponse("Cevap oluşturulurken hata oluştu", 400, result.Error);
+            }
+
+            return SuccessResponse(result.Value, "Cevap başarıyla oluşturuldu");
+        }
+        catch (Exception ex)
         {
-            return BadRequest(result.Error);
+            _logger.LogError(ex, "Cevap oluşturulurken hata oluştu. QuestionId: {QuestionId}", questionId);
+            return ErrorResponse("Cevap oluşturulurken hata oluştu", 500);
         }
-
-        return CreatedAtAction(nameof(GetAnswerById), new { id = result.Value.Id }, result.Value);
     }
 
     /// <summary>
@@ -203,13 +275,21 @@ public class QuestionController : ControllerBase
     [HttpGet("{questionId}/answers")]
     public async Task<IActionResult> GetAnswers(int questionId)
     {
-        var result = await _questionService.GetAnswersByQuestionIdAsync(questionId);
-        if (!result.IsSuccess)
+        try
         {
-            return BadRequest(result.Error);
-        }
+            var result = await _questionService.GetAnswersByQuestionIdAsync(questionId);
+            if (!result.IsSuccess)
+            {
+                return ErrorResponse("Soru cevapları getirilirken hata oluştu", 400, result.Error);
+            }
 
-        return Ok(result.Value);
+            return SuccessResponse(result.Value, "Soru cevapları başarıyla getirildi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Soru cevapları getirilirken hata oluştu. QuestionId: {QuestionId}", questionId);
+            return ErrorResponse("Soru cevapları getirilirken hata oluştu", 500);
+        }
     }
 
     /// <summary>
@@ -218,17 +298,25 @@ public class QuestionController : ControllerBase
     [HttpGet("answers/{id}")]
     public async Task<IActionResult> GetAnswerById(int id)
     {
-        var result = await _questionService.GetAnswerByIdAsync(id);
-        if (!result.IsSuccess)
+        try
         {
-            if (result.Error?.Code == ErrorCode.NotFound)
+            var result = await _questionService.GetAnswerByIdAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound(result.Error);
+                if (result.Error?.Code == ErrorCode.NotFound)
+                {
+                    return ErrorResponse("Cevap bulunamadı", 404);
+                }
+                return ErrorResponse("Cevap getirilirken hata oluştu", 400, result.Error);
             }
-            return BadRequest(result.Error);
-        }
 
-        return Ok(result.Value);
+            return SuccessResponse(result.Value, "Cevap başarıyla getirildi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Cevap getirilirken hata oluştu. ID: {Id}", id);
+            return ErrorResponse("Cevap getirilirken hata oluştu", 500);
+        }
     }
 
     /// <summary>
@@ -237,22 +325,30 @@ public class QuestionController : ControllerBase
     [HttpPut("answers/{id}")]
     public async Task<IActionResult> UpdateAnswer(int id, [FromBody] UpdateAnswerDto updateAnswerDto)
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return BadRequest(ModelState);
-        }
-
-        var result = await _questionService.UpdateAnswerAsync(id, updateAnswerDto);
-        if (!result.IsSuccess)
-        {
-            if (result.Error?.Code == ErrorCode.NotFound)
+            if (!ModelState.IsValid)
             {
-                return NotFound(result.Error);
+                return ErrorResponse("Geçersiz veri", 400, ModelState);
             }
-            return BadRequest(result.Error);
-        }
 
-        return Ok(result.Value);
+            var result = await _questionService.UpdateAnswerAsync(id, updateAnswerDto);
+            if (!result.IsSuccess)
+            {
+                if (result.Error?.Code == ErrorCode.NotFound)
+                {
+                    return ErrorResponse("Cevap bulunamadı", 404);
+                }
+                return ErrorResponse("Cevap güncellenirken hata oluştu", 400, result.Error);
+            }
+
+            return SuccessResponse(result.Value, "Cevap başarıyla güncellendi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Cevap güncellenirken hata oluştu. ID: {Id}", id);
+            return ErrorResponse("Cevap güncellenirken hata oluştu", 500);
+        }
     }
 
     /// <summary>
@@ -261,16 +357,24 @@ public class QuestionController : ControllerBase
     [HttpDelete("answers/{id}")]
     public async Task<IActionResult> DeleteAnswer(int id)
     {
-        var result = await _questionService.DeleteAnswerAsync(id);
-        if (!result.IsSuccess)
+        try
         {
-            if (result.Error?.Code == ErrorCode.NotFound)
+            var result = await _questionService.DeleteAnswerAsync(id);
+            if (!result.IsSuccess)
             {
-                return NotFound(result.Error);
+                if (result.Error?.Code == ErrorCode.NotFound)
+                {
+                    return ErrorResponse("Cevap bulunamadı", 404);
+                }
+                return ErrorResponse("Cevap silinirken hata oluştu", 400, result.Error);
             }
-            return BadRequest(result.Error);
-        }
 
-        return NoContent();
+            return SuccessResponse("Cevap başarıyla silindi");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Cevap silinirken hata oluştu. ID: {Id}", id);
+            return ErrorResponse("Cevap silinirken hata oluştu", 500);
+        }
     }
 }
