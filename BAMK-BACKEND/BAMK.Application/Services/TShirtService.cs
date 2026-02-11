@@ -216,6 +216,36 @@ namespace BAMK.Application.Services
             }
         }
 
+        public async Task<Result<IEnumerable<TShirtDto>>> GetByPriceRangeAsync(decimal minPrice, decimal maxPrice)
+        {
+            try
+            {
+                if (minPrice < 0 || maxPrice < 0)
+                {
+                    return Result<IEnumerable<TShirtDto>>.Failure(
+                        Error.Create(ErrorCode.ValidationError, "Fiyat aralığı negatif olamaz"));
+                }
+
+                if (minPrice > maxPrice)
+                {
+                    return Result<IEnumerable<TShirtDto>>.Failure(
+                        Error.Create(ErrorCode.ValidationError, "Minimum fiyat maksimum fiyattan büyük olamaz"));
+                }
+
+                var tShirts = await _tShirtRepository.FindAsync(t =>
+                    t.IsActive && t.Price >= minPrice && t.Price <= maxPrice);
+                var tShirtDtos = _mapper.Map<IEnumerable<TShirtDto>>(tShirts);
+
+                return Result<IEnumerable<TShirtDto>>.Success(tShirtDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fiyat aralığına göre t-shirt'leri getirirken hata oluştu. Min: {MinPrice}, Max: {MaxPrice}", minPrice, maxPrice);
+                return Result<IEnumerable<TShirtDto>>.Failure(
+                    Error.Create(ErrorCode.InvalidOperation, "Fiyat aralığına göre t-shirt'ler getirilemedi"));
+            }
+        }
+
         public async Task<Result<bool>> UpdateStockAsync(int id, int quantity)
         {
             try

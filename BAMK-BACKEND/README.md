@@ -87,7 +87,7 @@ BAMK-BACKEND/
 - `POST /api/users` - Yeni kullanıcı
 - `PUT /api/users/{id}` - Kullanıcı güncelle
 
-### 👕 TShirts (8 endpoint)
+### 👕 TShirts (9 endpoint)
 - `GET /api/tshirts` - Tüm t-shirt'ler
 - `GET /api/tshirts/{id}` - T-shirt detayı
 - `POST /api/tshirts` - Yeni t-shirt
@@ -97,6 +97,7 @@ BAMK-BACKEND/
 - `GET /api/tshirts/color/{color}` - Renk bazlı filtreleme
 - `GET /api/tshirts/size/{size}` - Beden bazlı filtreleme
 - `PUT /api/tshirts/{id}/stock` - Stok güncelleme
+- `GET /api/tshirts/price-range?minPrice=100&maxPrice=500` - Fiyat aralığına göre filtreleme
 
 ### 📋 ProductDetails (7 endpoint) - YENİ!
 - `GET /api/productdetail` - Tüm ürün detayları
