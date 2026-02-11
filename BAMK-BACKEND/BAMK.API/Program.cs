@@ -29,6 +29,22 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 // Add Infrastructure Services
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+
+// Add SAP Integration Configuration
+builder.Services.Configure<SapIntegrationSettings>(builder.Configuration.GetSection(SapIntegrationSettings.SectionName));
+
+builder.Services.AddHttpClient<ISapIntegrationService, SapIntegrationService>((serviceProvider, client) =>
+{
+    var sapSettings = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<SapIntegrationSettings>>().Value;
+
+    if (!string.IsNullOrWhiteSpace(sapSettings.BaseUrl))
+    {
+        client.BaseAddress = new Uri(sapSettings.BaseUrl);
+    }
+
+    client.Timeout = TimeSpan.FromSeconds(sapSettings.TimeoutSeconds <= 0 ? 30 : sapSettings.TimeoutSeconds);
+});
+
 // Add AutoMapper
 builder.Services.AddAutoMapper(
     typeof(BAMK.Application.Mappings.TShirtMappingProfile),

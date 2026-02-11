@@ -1,5 +1,6 @@
 using BAMK.Application.DTOs.Order;
 using BAMK.Application.Services;
+using BAMK.API.Services;
 using BAMK.Core.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +13,15 @@ namespace BAMK.API.Controllers
     public class OrderController : BaseController
     {
         private readonly IOrderService _orderService;
+        private readonly ISapIntegrationService _sapIntegrationService;
 
-        public OrderController(IOrderService orderService, ILogger<OrderController> logger) : base(logger)
+        public OrderController(
+            IOrderService orderService,
+            ISapIntegrationService sapIntegrationService,
+            ILogger<OrderController> logger) : base(logger)
         {
             _orderService = orderService;
+            _sapIntegrationService = sapIntegrationService;
         }
 
         /// <summary>
@@ -199,6 +205,40 @@ namespace BAMK.API.Controllers
             {
                 _logger.LogError(ex, "Ödeme durumu güncellenirken hata oluştu. ID: {Id}", id);
                 return ErrorResponse("Ödeme durumu güncellenirken hata oluştu", 500);
+            }
+        }
+
+        /// <summary>
+        /// Siparişi SAP sistemine senkronize eder
+        /// </summary>
+        [HttpPost("{id}/sap-sync")]
+        public async Task<IActionResult> SyncOrderToSap(int id)
+        {
+            try
+            {
+                var orderResult = await _orderService.GetByIdAsync(id);
+                if (!orderResult.IsSuccess || orderResult.Value == null)
+                {
+                    if (orderResult.Error?.Code == ErrorCode.NotFound)
+                    {
+                        return ErrorResponse("Sipariş bulunamadı", 404);
+                    }
+
+                    return ErrorResponse("Sipariş bilgisi alınamadı", 400, orderResult.Error);
+                }
+
+                var sapResult = await _sapIntegrationService.SyncOrderAsync(orderResult.Value);
+                if (!sapResult.IsSuccess)
+                {
+                    return ErrorResponse("SAP senkronizasyonu başarısız", 502, sapResult.Error);
+                }
+
+                return SuccessResponse(sapResult.Value, "Sipariş SAP sistemine başarıyla gönderildi");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SAP senkronizasyonu sırasında hata oluştu. OrderId: {OrderId}", id);
+                return ErrorResponse("SAP senkronizasyonu sırasında hata oluştu", 500);
             }
         }
 

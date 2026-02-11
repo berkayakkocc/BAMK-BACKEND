@@ -108,7 +108,7 @@ BAMK-BACKEND/
 - `PUT /api/productdetail/{id}/status` - Durum güncelle
 - `DELETE /api/productdetail/{id}` - Ürün detayı sil
 
-### 📦 Orders (8 endpoint)
+### 📦 Orders (9 endpoint)
 - `GET /api/orders` - Tüm siparişler
 - `GET /api/orders/{id}` - Sipariş detayı
 - `POST /api/orders` - Yeni sipariş
@@ -117,6 +117,7 @@ BAMK-BACKEND/
 - `GET /api/orders/user/{userId}` - Kullanıcı siparişleri
 - `GET /api/orders/{id}/total` - Sipariş toplamı
 - `DELETE /api/orders/{id}` - Sipariş sil
+- `POST /api/orders/{id}/sap-sync` - Siparişi SAP API'ye gönder
 
 ### ❓ Questions (12 endpoint)
 - `GET /api/question` - Tüm sorular
