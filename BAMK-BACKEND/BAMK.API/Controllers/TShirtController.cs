@@ -92,6 +92,21 @@ namespace BAMK.API.Controllers
         }
 
         /// <summary>
+        /// Fiyat aralığına göre aktif t-shirt'leri getirir
+        /// </summary>
+        [HttpGet("price-range")]
+        public async Task<ActionResult<IEnumerable<TShirtDto>>> GetByPriceRange([FromQuery] decimal minPrice, [FromQuery] decimal maxPrice)
+        {
+            var result = await _tShirtService.GetByPriceRangeAsync(minPrice, maxPrice);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result.Error);
+            }
+
+            return Ok(result.Value);
+        }
+
+        /// <summary>
         /// Yeni t-shirt oluşturur (Admin yetkisi gerekli)
         /// </summary>
         [HttpPost]

@@ -13,6 +13,7 @@ namespace BAMK.Application.Services
         Task<Result<IEnumerable<TShirtDto>>> GetActiveAsync();
         Task<Result<IEnumerable<TShirtDto>>> GetByColorAsync(string color);
         Task<Result<IEnumerable<TShirtDto>>> GetBySizeAsync(string size);
+        Task<Result<IEnumerable<TShirtDto>>> GetByPriceRangeAsync(decimal minPrice, decimal maxPrice);
         Task<Result<bool>> UpdateStockAsync(int id, int quantity);
         
         // New business logic methods

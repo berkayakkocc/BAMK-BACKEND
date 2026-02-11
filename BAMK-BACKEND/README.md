@@ -87,7 +87,7 @@ BAMK-BACKEND/
 - `POST /api/users` - Yeni kullanıcı
 - `PUT /api/users/{id}` - Kullanıcı güncelle
 
-### 👕 TShirts (8 endpoint)
+### 👕 TShirts (9 endpoint)
 - `GET /api/tshirts` - Tüm t-shirt'ler
 - `GET /api/tshirts/{id}` - T-shirt detayı
 - `POST /api/tshirts` - Yeni t-shirt
@@ -97,6 +97,7 @@ BAMK-BACKEND/
 - `GET /api/tshirts/color/{color}` - Renk bazlı filtreleme
 - `GET /api/tshirts/size/{size}` - Beden bazlı filtreleme
 - `PUT /api/tshirts/{id}/stock` - Stok güncelleme
+- `GET /api/tshirts/price-range?minPrice=100&maxPrice=500` - Fiyat aralığına göre filtreleme
 
 ### 📋 ProductDetails (7 endpoint) - YENİ!
 - `GET /api/productdetail` - Tüm ürün detayları
@@ -107,7 +108,7 @@ BAMK-BACKEND/
 - `PUT /api/productdetail/{id}/status` - Durum güncelle
 - `DELETE /api/productdetail/{id}` - Ürün detayı sil
 
-### 📦 Orders (8 endpoint)
+### 📦 Orders (9 endpoint)
 - `GET /api/orders` - Tüm siparişler
 - `GET /api/orders/{id}` - Sipariş detayı
 - `POST /api/orders` - Yeni sipariş
@@ -116,6 +117,7 @@ BAMK-BACKEND/
 - `GET /api/orders/user/{userId}` - Kullanıcı siparişleri
 - `GET /api/orders/{id}/total` - Sipariş toplamı
 - `DELETE /api/orders/{id}` - Sipariş sil
+- `POST /api/orders/{id}/sap-sync` - Siparişi SAP API'ye gönder
 
 ### ❓ Questions (12 endpoint)
 - `GET /api/question` - Tüm sorular
